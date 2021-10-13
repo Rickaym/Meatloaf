@@ -3,3 +3,4 @@
 
 # Ignore settings and configs etc..
 *.json
+*.bat
