@@ -1,0 +1,78 @@
+TODO
+=====
+1. Create more datatypes
+2. Functions and return statements
+
+
+
+Native infix
+============
+Infix type implemented in the backbone language.
+
+
+Native Infix -.
+              |
+              ._ Loaftic Infix -> Define `int`, `str` and other datatypes
+
+
+Process
+=======
+
+Source Code:
+    _________________
+     1 | 41 + 2
+
+1. Lexer ...
+    Iterates through, ['4', '1', ' ', '+', ' ', '2']
+
+    Characters that are being iterated through will be resolved by the naive type manager, the resolver will
+    characterize every single morpheme into a Token until the end of file is reached where the EOF Token will be
+    appended.
+
+i[0]    4   -> i[1] 41   ->
+        ^            ^-------- Still meets the criteria therefore it will be part of the token.
+        |
+        +--- Gets resolved into `Num`, the identity `Num` will then take hold of the type guide to see whether if the
+             characters after advancement still meets this criteria.
+            : Token(type=Num, value=41)
+
+i[2] SKIPS
+
+i[3]   +
+       ^
+       |
+       +--- A valid `Infix` is detected and is tokenized.
+            : Token(type=Infix, value="+")
+
+i[4]   2
+       ^
+       |
+       +--- A valid number but the character after it doesn't meet the numeric criteria so it stops here.
+            : Token(type=Num, value=2)
+
+    Resulting Token Array:
+        [ <Num:41>, <infix:+>, <Num:2> ]
+
+2. Parser ...
+
+    The parser goes through the token array to construct an abstract syntax tree.
+
+Order of operations:
+
+    a. Attempt to get an expression.
+
+    Find expressions of `*` and `/`
+
+    Factors -.-----------.
+             |           |
+         <Num:41>  <infix:+> != `*` or `/`
+
+        RETURN <Num:41>
+
+
+Grammer
+========
+
+expr    : term ((PLUS|MINUS) term)*
+term    : factor ((MUL|DIV) factor)*
+factor  : INT|FLOAT
