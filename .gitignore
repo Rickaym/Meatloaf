@@ -2,5 +2,6 @@
 ./py_impl
 
 # Ignore settings and configs etc..
+.*
 *.json
 *.bat

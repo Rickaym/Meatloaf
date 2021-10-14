@@ -13,8 +13,11 @@ def cexec(cmdlet):
 
 pth = CONFIG['path']
 runs = CONFIG['executable'].replace('/', '\\')
-cexec(
-    f"{CONFIG['compiler']} -Wall -I ./include {pth}{f'.cpp {pth}'.join(CONFIG['src'])}.cpp -o {CONFIG['executable']} \
-    ;{runs} \
-    ;cmd /c .\garbage.bat"
-    )
+try:
+    cexec(
+        f"{CONFIG['compiler']} -Wall -I ./include {pth}{f'.cpp {pth}'.join(CONFIG['src'])}.cpp -o {CONFIG['executable']} \
+        ;{runs} \
+        ;cmd /c .\garbage.bat"
+        )
+except KeyboardInterrupt:
+    pass
