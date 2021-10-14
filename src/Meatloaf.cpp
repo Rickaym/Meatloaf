@@ -13,7 +13,7 @@ int main() {
         std::getline(std::cin, cmdlet);
 
         std::vector<Token> tokens = Lexer::tokenize(cmdlet);
-        std::cout << "\n... ";
+        std::cout << "... ";
         for (Token tk: tokens)
         {
             std::cout << tk.toString() << ' ';

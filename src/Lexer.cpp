@@ -6,11 +6,15 @@
 
 #include "Lexer.h"
 
-////////////////////////////////////////////////////////////////////////////////
-//    LEXOR AND LEXICAL INSTRUMENTS
-////////////////////////////////////////////////////////////////////////////////
+const char g_lexicon_delimiters[2] = {' ', ';'};
 
-const char g_delimiters[2] = {' ', ';'};
+/* PRECEDENCE */
+    short LOWEST = 0;
+    short LOWER = 1;
+    short LOW = 2;
+    short HIGH = 3;
+    short HIGHER = 4;
+    short HIGHEST = 5;
 
 void TypeGuide::advance()
 {
@@ -37,7 +41,7 @@ Position TypeGuide::capture()
 
 void TypeGuide::retreat()
 {
-    std::cout << "Retreating..";
+    // std::cout << "Retreating..";
     this->pos--;
     this->column--;
 
@@ -60,19 +64,19 @@ void TypeGuide::updateChar()
         this->chr = '!';
         this->eof = true;
     }
-    std::cout << this->chr << "-" << this->pos << ", ";
+    // std::cout << this->chr << "-" << this->pos << ", ";
 };
 
 bool TypeGuide::chrIsDelim()
 {
-    const char *uncover = std::find(std::begin(g_delimiters),
-                                    std::end(g_delimiters), this->chr);
-    return !(uncover == std::end(g_delimiters));
+    const char *uncover = std::find(std::begin(g_lexicon_delimiters),
+                                    std::end(g_lexicon_delimiters), this->chr);
+    return !(uncover == std::end(g_lexicon_delimiters));
 }
 
-Position Position::copy()
+std::string Position::toString()
 {
-    return Position(this->start, this->end, this->column, this->line);
+    return std::to_string(this->line) + ":" + std::to_string(this->column) + "~" + std::to_string(this->end);
 };
 
 bool Token::isValid()
@@ -88,6 +92,11 @@ bool Token::operator==(Token &other)
 bool Token::operator!=(Token &other)
 {
     return !this->operator!=(other);
+};
+
+std::string Token::toString()
+{
+    return "Tk<" + this->meaning.toString() + " @ " + this->position.toString() + ">";
 };
 
 void Morpheme::setValue(std::string val)
@@ -113,16 +122,6 @@ bool Morpheme::operator!=(Morpheme &other)
 std::string Morpheme::toString()
 {
     return this->typehint + ":" + this->value;
-};
-
-std::string Position::toString()
-{
-    return "ln:" + std::to_string(this->line) + " col:" + std::to_string(this->column);
-};
-
-std::string Token::toString()
-{
-    return "Tk<" + this->meaning.toString() + " @ " + this->position.toString() + ">";
 };
 
 //////////////////////////////////////////////////////////////
@@ -171,10 +170,10 @@ struct MlNum : public Morpheme
 
     static Token conclude(TypeGuide &guide)
     {
-        std::cout << "Starting to resolve a number.."
-                  << "\n";
+        // std::cout << "Starting to resolve a number.."
+        //           << "\n";
         std::string result;
-        //int dotCount = 0;
+        // int dotCount = 0;
         int column = guide.column;
         int start = guide.pos;
         int line = guide.line;
@@ -182,7 +181,7 @@ struct MlNum : public Morpheme
         {
             if (guide.chr == '.')
             {
-                //dotCount++;
+                // dotCount++;
                 break;
             }
             else
@@ -191,7 +190,7 @@ struct MlNum : public Morpheme
                 guide.advance();
             }
         };
-        //guide.retreat();
+        // guide.retreat();
         int end = guide.pos;
         return Token(MlNum(result), Position(start, end, column, line));
     };
@@ -210,24 +209,34 @@ struct MlNamespace : public Morpheme
         this->setTypehint(__func__);
     };
 
-    static Token conclude(TypeGuide &guide)
+    static Token resolve(TypeGuide &guide, std::string result, Position pos)
     {
-        std::cout << "Starting to resolve a namespace.."
-                  << "\n";
-        std::string result = "";
-        int dotCount = 0;
-        int column = guide.column;
-        int start = guide.pos;
-        int line = guide.line;
         while (guide.eof == false && guide.chrIsDelim() == false)
         {
             result += guide.chr;
             guide.advance();
         };
-        //guide.retreat();
-        int end = guide.pos;
-        return Token(MlNamespace(result), Position(start, end, column, line));
+        // guide.retreat();
+        pos.end = guide.pos;
+        return Token(MlNamespace(result), pos);
+    }
+
+    static Token conclude(TypeGuide &guide, std::string result, Position pos)
+    {
+        return MlNamespace::resolve(guide, result, pos);
     };
+
+    static Token conclude(TypeGuide &guide)
+    {
+        return MlNamespace::resolve(guide, "", guide.capture());
+    };
+};
+
+struct MlAffix : public Morpheme
+{
+    bool isUnary;
+    bool interfix;
+    short precedence;
 };
 
 struct MlInfix : public Morpheme
@@ -243,15 +252,8 @@ struct MlInfix : public Morpheme
         this->setTypehint(__func__);
     };
 
-    static Token conclude(TypeGuide &guide, std::vector<MlInfix> hints)
+    static Token conclude(TypeGuide &guide)
     {
-        std::string result;
-        result += guide.chr;
-        while (guide.eof == false)
-        {
-            guide.advance();
-            result += guide.chr;
-        };
         return Token();
     };
 };
@@ -260,70 +262,67 @@ struct MlInfix : public Morpheme
 //                   Naive Definition                       //
 //////////////////////////////////////////////////////////////
 
-std::vector<Morpheme> g_predefs;
+const MlInfix g_lexicon_infixes[8] =
+        {MlInfix("~", true, false, LOWEST),
+         MlInfix("=", true, false, LOWEST),
+         MlInfix("+", true, false, LOWER),
+         MlInfix("-", true, false, LOWER),
+         MlInfix("*", true, false, LOW),
+         MlInfix("/", true, false, LOW),
+         MlInfix("...", true, false, LOW),
+         MlInfix("return", true, true, LOW)};
 
-auto in_g_predefs(std::string chr)
+auto isDefinedInfix(std::string chr)
 {
-    auto isEquals = [chr](Morpheme m)
+    auto isEquals = [chr](MlInfix m)
     {
-        std::cout << m.value << " VS " << chr << "\n";
+        // std::cout << m.value << " VS " << chr << "\n";
         return m.value == chr;
     };
-    return std::find_if(std::begin(g_predefs), std::end(g_predefs), isEquals);
+    return std::find_if(std::begin(g_lexicon_infixes), std::end(g_lexicon_infixes), isEquals);
 };
 
-void MlDefines(const Morpheme &type)
-{
-    g_predefs.push_back(type);
-};
-
-/* The lexor will resolve any namespace into a more meaningful morpheme
-if it's value has been predefined */
+/* The lexor will resolve a potential namespace into a more
+   meaningful morpheme if it's value has been predefined */
 Token MlResolve(TypeGuide &guide)
 {
-    std::cout << "Checking if encountering namespace is predefined to be type different\n";
+    // std::cout << "Checking if encountering namespace is predefined to be type different\n";
     std::string chr(1, guide.chr);
     Position capture = guide.capture();
     guide.advance();
-    auto res = in_g_predefs(chr);
-    if (res != std::end(g_predefs))
+    auto res = isDefinedInfix(chr);
+    if (res != std::end(g_lexicon_infixes))
     {
         capture.end = guide.pos;
-        std::cout << "FOUND INFIX MATCH\n";
+        // std::cout << "FOUND INFIX MATCH\n";
         return Token(*res, capture);
     }
 
     auto startswith = [chr](Morpheme m)
     {
-        return m.value.rfind(chr) != -1;
+        return (int)m.value.rfind(chr) != -1;
     };
     std::vector<Morpheme> matches;
-    std::copy_if(std::begin(g_predefs), std::end(g_predefs), std::back_inserter(matches), startswith);
-    std::cout <<" EOF "<< guide.eof << "\n";
-    while (res == std::end(g_predefs) && guide.eof == false)
+    std::copy_if(std::begin(g_lexicon_infixes), std::end(g_lexicon_infixes), std::back_inserter(matches), startswith);
+    while (res == std::end(g_lexicon_infixes) && guide.eof == false && guide.chrIsDelim() == false)
     {
         chr += guide.chr;
-        std::cout <<" EOF "<< guide.eof << "\n";
-        res = in_g_predefs(chr);
+        res = isDefinedInfix(chr);
         guide.advance();
     };
     capture.end = guide.pos;
-    if (res != std::end(g_predefs))
+    if (res != std::end(g_lexicon_infixes) && !((*res).interfix == true && (guide.chrIsDelim() == false && guide.eof == false)))
     {
         return Token(*res, capture);
     }
     else
     {
-        return Token(MlNamespace(chr), capture);
+        /* Case where lexxed component is not predefined as an infix
+           we pass it over to conclude a namespace */
+        return MlNamespace::conclude(guide, chr, capture);
     };
 };
 
-short LOWEST = 0;
-short LOWER = 1;
-short LOW = 2;
-short HIGH = 3;
-short HIGHER = 4;
-short HIGHEST = 5;
 
 //////////////////////////////////////////////////////////////
 //                      Tokenizer                           //
@@ -331,15 +330,6 @@ short HIGHEST = 5;
 
 std::vector<Token> Lexer::tokenize(const std::string &text)
 {
-    MlDefines(MlInfix("~", true, false, LOWEST));
-    MlDefines(MlInfix("=", true, false, LOWEST));
-    MlDefines(MlInfix("{{", true, false, LOWEST));
-    MlDefines(MlInfix("+", true, false, LOWER));
-    MlDefines(MlInfix("-", true, false, LOWER));
-    MlDefines(MlInfix("*", true, false, LOW));
-    MlDefines(MlInfix("/", true, false, LOW));
-    MlDefines(MlInfix("...", true, false, LOW));
-
     std::vector<Token> tokens;
     TypeGuide typeGuide(text);
 
@@ -347,11 +337,11 @@ std::vector<Token> Lexer::tokenize(const std::string &text)
     while (typeGuide.eof != true)
     {
         Token tk;
-        /* We step over g_delimiters under command of the lexer, however
+        /* We step over g_lexicon_delimiters under command of the lexer, however
            this does not mean we do the same in resolving any hinted characters */
         if (typeGuide.chrIsDelim() == true)
         {
-            std::cout << "Stepping over " << typeGuide.chr << "\n";
+            // std::cout << "Stepping over " << typeGuide.chr << "\n";
             typeGuide.advance();
             continue;
         };
@@ -365,6 +355,7 @@ std::vector<Token> Lexer::tokenize(const std::string &text)
             /* Certain types are necessatitated to be pre-defined as the rudimentary toolset
                Provided they are for use of the Meatloaf compiler */
             tk = MlResolve(typeGuide);
+
             if (tk.isValid() == false)
             {
                 tk = MlNamespace::conclude(typeGuide);
@@ -373,14 +364,15 @@ std::vector<Token> Lexer::tokenize(const std::string &text)
         if (tk.isValid() == true)
         {
             tokens.push_back(tk);
-            std::cout << "Token found for " << tk.meaning.value << " stopped at ";
-            std::cout << typeGuide.pos << "\n";
-            //typeGuide.advance();
+            // std::cout << "Token found for " << tk.meaning.value << " stopped at ";
+            // std::cout << typeGuide.pos << "\n";
+            /* if a token is valid, it will advance the typeguide safely onto
+               the appended character */
         }
         else
         {
             return tokens;
-            std::cout << "Invalid token found for " << typeGuide.chr << "\n";
+            // std::cout << "Invalid token found for " << typeGuide.chr << "\n";
         }
     };
     Morpheme mrph;

@@ -1,4 +1,11 @@
-![Food vector created by brgfx - www.freepik.com](./ideas/icon.png)
+<img src="./ideas/icon.png" alt="Food vector created by brgfx - www.freepik.com" width="200" style="float: right;"/>
+
+Copyright (c) 2001-2021 Ricky.
+
+## Index
+1. **[Debrief](#meatloaf)**
+2. **[Functionality](#functionality)**
+3. **[Execution](#execution)**
 
 # Meatloaf
 A programming language in an attempt to establish a greater comprehensive source code rubric.
@@ -9,4 +16,4 @@ In analysis, *everything* consisted of source code is but abstract concepts that
 
 In theory, opening up language implementaion onto a higher level opens up syntax immitation, Meatloaf code but in Python syntax as an example. On the surface, it sounds rather useless, but there's something to be said about the capability of understanding different syntax implementation on a high level.
 
-###### TO BE CONTINUED..
+###### TBC

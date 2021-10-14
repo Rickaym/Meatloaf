@@ -6,6 +6,10 @@
 
 struct Position;
 
+/**
+ * @brief A type guide used to feed characters accurately into the lexer
+ * during tokenization.
+*/
 struct TypeGuide
 {
     const std::string text;
@@ -34,6 +38,9 @@ private:
     void updateChar();
 };
 
+/**
+ * @brief Position of a morpheme in the source code.
+*/
 struct Position
 {
     int start = 0;
@@ -49,11 +56,22 @@ struct Position
 
     Position(TypeGuide guide) : Position(guide.pos, guide.pos + 1, guide.column, guide.line){};
 
-    Position copy();
-
     std::string toString();
 };
 
+/**
+ * @brief A morpheme is the smallest unit of meaning characterized by semantics.
+ *
+ * For instance, "1" is a morpheme that represents the number one.
+ * Morphemes curate it's own interactions with bound-morphemes.
+ * Whatever morphemes originating from a given morpheme are called
+ * "bound" morphemes.
+ *
+ * In this instance the negative unary operator "-" is a bound
+ * morpheme that carries with it extra meaning to our prior morpheme "1".
+ * Note that -1 consits of two morphemes, which can be described as a lexeme
+ * that comes at play at the parsing stage.
+*/
 struct Morpheme
 {
     std::string value = "N/A";
@@ -94,6 +112,10 @@ struct Morpheme
     void setTypehint(std::string val);
 };
 
+/**
+ * A Token is a simple container with a meaning (morpheme) and it's position in
+ * the source code.
+*/
 struct Token
 {
     Morpheme meaning;

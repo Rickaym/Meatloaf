@@ -6,7 +6,6 @@ with open("config.json", "r") as f:
 
 def cexec(cmdlet):
     for cmd in cmdlet.split(";"):
-        print(f"RUNNING {cmd}")
         if os.system(cmd) == 1:
             print(f"BUILD RECEEDING... FAILURE")
             break
