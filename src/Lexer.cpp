@@ -8,13 +8,12 @@
 
 const char g_lexicon_delimiters[2] = {' ', ';'};
 
-/* PRECEDENCE */
-    short LOWEST = 0;
-    short LOWER = 1;
-    short LOW = 2;
-    short HIGH = 3;
-    short HIGHER = 4;
-    short HIGHEST = 5;
+short LOWEST = 0;
+short LOWER = 1;
+short LOW = 2;
+short HIGH = 3;
+short HIGHER = 4;
+short HIGHEST = 5;
 
 void TypeGuide::advance()
 {
@@ -74,7 +73,7 @@ bool TypeGuide::chrIsDelim()
     return !(uncover == std::end(g_lexicon_delimiters));
 }
 
-std::string Position::toString()
+std::string Position::to_string()
 {
     return std::to_string(this->line) + ":" + std::to_string(this->column) + "~" + std::to_string(this->end);
 };
@@ -94,9 +93,9 @@ bool Token::operator!=(Token &other)
     return !this->operator!=(other);
 };
 
-std::string Token::toString()
+std::string Token::to_string()
 {
-    return "Tk<" + this->meaning.toString() + " @ " + this->position.toString() + ">";
+    return "Tk<" + this->meaning.to_string() + " @ " + this->position.to_string() + ">";
 };
 
 void Morpheme::setValue(std::string val)
@@ -109,6 +108,18 @@ void Morpheme::setTypehint(std::string val)
     this->typehint = val;
 }
 
+void Morpheme::setUnary(bool unary)
+{
+    this->unary = unary;
+}
+void Morpheme::setPrecedence(short prc)
+{
+    this->precedence = prc;
+}
+void Morpheme::setInterfix(bool interfix)
+{
+    this->interfix = interfix;
+}
 bool Morpheme::operator==(Morpheme &other)
 {
     return this->value == other.value && this->typehint == other.typehint;
@@ -119,7 +130,7 @@ bool Morpheme::operator!=(Morpheme &other)
     return !this->operator!=(other);
 };
 
-std::string Morpheme::toString()
+std::string Morpheme::to_string()
 {
     return this->typehint + ":" + this->value;
 };
@@ -144,12 +155,12 @@ struct MlNum : public Morpheme
         this->setTypehint(__func__);
     };
 
-    Morpheme infix(const Morpheme &me, const Morpheme &sign, const Morpheme &operand, int stack) override
+    Morpheme infix(const Morpheme &op, const Morpheme &operand, int stack) override
     {
         return MlNum();
     };
 
-    Morpheme infix(const Morpheme &me, const Morpheme &sign, int stack) override
+    Morpheme infix(const Morpheme &op, int stack) override
     {
         return MlNum();
     };
@@ -234,22 +245,17 @@ struct MlNamespace : public Morpheme
 
 struct MlAffix : public Morpheme
 {
-    bool isUnary;
-    bool interfix;
-    short precedence;
 };
 
 struct MlInfix : public Morpheme
 {
-    bool isUnary;
-    bool interfix;
-    short precedence;
-
-    MlInfix(std::string val, bool isUnary_, bool interfix_, short precedence_)
-        : isUnary(isUnary_), interfix(interfix_), precedence(precedence_)
+    MlInfix(std::string val, bool isUnary, bool interfix, short precedence)
     {
         this->setValue(val);
         this->setTypehint(__func__);
+        this->setPrecedence(precedence);
+        this->setUnary(isUnary);
+        this->setInterfix(interfix);
     };
 
     static Token conclude(TypeGuide &guide)
@@ -375,11 +381,7 @@ std::vector<Token> Lexer::tokenize(const std::string &text)
             // std::cout << "Invalid token found for " << typeGuide.chr << "\n";
         }
     };
-    Morpheme mrph;
-    mrph.setTypehint("EOF");
-    mrph.setValue(" ");
-    Token tEof(mrph);
-    tokens.push_back(tEof);
+    tokens.push_back(Token(Morpheme()));
 
     return tokens;
 };

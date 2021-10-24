@@ -4,6 +4,7 @@
 #include <string>
 #include <cstddef>
 
+
 struct Position;
 
 /**
@@ -56,7 +57,7 @@ struct Position
 
     Position(TypeGuide guide) : Position(guide.pos, guide.pos + 1, guide.column, guide.line){};
 
-    std::string toString();
+    std::string to_string();
 };
 
 /**
@@ -76,6 +77,9 @@ struct Morpheme
 {
     std::string value = "N/A";
     std::string typehint = "udf";
+    short precedence;
+    bool unary;
+    bool interfix;
 
     Morpheme() {};
 
@@ -94,22 +98,27 @@ struct Morpheme
     bool operator != (Morpheme &other);
 
     // Binary Operational implementations for affixes.
-    virtual Morpheme infix(const Morpheme &me, const Morpheme &sign, const Morpheme &operand, int stack)
+    virtual Morpheme infix(const Morpheme &sign, const Morpheme &operand, int stack)
     {
-        return me;
+        return *this;
     };
 
     // Unary operational implementations for infixes with an absent operand.
-    virtual Morpheme infix(const Morpheme &me, const Morpheme &sign, int stack)
+    virtual Morpheme infix(const Morpheme &sign, int stack)
     {
-        return me;
+        return *this;
     };
 
-    std::string toString();
+    std::string to_string();
 
-    void setValue(std::string val);
 
+
+protected:
     void setTypehint(std::string val);
+    void setPrecedence(short prc);
+    void setUnary(bool unary);
+    void setInterfix(bool intfx);
+    void setValue(std::string val);
 };
 
 /**
@@ -134,7 +143,7 @@ struct Token
 
     bool isValid();
 
-    std::string toString();
+    std::string to_string();
 
 private:
     bool valid;
