@@ -4,12 +4,21 @@
 #include <string>
 #include <cstddef>
 
+const short LOWEST = 0;
+const short LOWER = 1;
+const short LOW = 2;
+const short HIGH = 3;
+const short HIGHER = 4;
+const short HIGHEST = 5;
+
+const char g_lexicon_delimiters[2] = {' ', ';'};
 
 struct Position;
 
 /**
- * @brief A type guide used to feed characters accurately into the lexer
- * during tokenization.
+ * @brief A type guide used to feed characters into the lexer
+ * during tokenization, this isn't part of the lexer class as opposed to
+ * the parser having it's own internal guide.
 */
 struct TypeGuide
 {
@@ -23,9 +32,7 @@ struct TypeGuide
     bool newLine = false;
     bool eof = false;
 
-    TypeGuide(){};
-
-    TypeGuide(const std::string &text) : text(text){};
+    TypeGuide(const std::string& text) : text(text) {};
 
     void advance();
 
@@ -40,7 +47,7 @@ private:
 };
 
 /**
- * @brief Position of a morpheme in the source code.
+ * @brief A description of the position a morpheme has in the source code.
 */
 struct Position
 {
@@ -49,13 +56,12 @@ struct Position
     int column = 1;
     int line = 1;
 
-    Position() {};
+    Position() = default;
 
-    Position(int start, int end,
-             int column, int line) : start(start), end(end),
-                                     column(column), line(line){};
+    Position(int start, int end, int column, int line) : start(start), end(end),
+        column(column), line(line) {};
 
-    Position(TypeGuide guide) : Position(guide.pos, guide.pos + 1, guide.column, guide.line){};
+    Position(TypeGuide guide) : Position(guide.pos, guide.pos + 1, guide.column, guide.line) {};
 
     std::string to_string();
 };
@@ -65,37 +71,33 @@ struct Position
  *
  * For instance, "1" is a morpheme that represents the number one.
  * Morphemes curate it's own interactions with bound-morphemes.
- * Whatever morphemes originating from a given morpheme are called
- * "bound" morphemes.
+ * New morphemes are created from combining a given morpheme and
+ * "bound" morphemes whereas "bound" morphemes are invalid alone.
  *
  * In this instance the negative unary operator "-" is a bound
  * morpheme that carries with it extra meaning to our prior morpheme "1".
- * Note that -1 consits of two morphemes, which can be described as a lexeme
- * that comes at play at the parsing stage.
+ * Note that -1 consits of two morphemes, a lexeme.
+ * 
+ * Some affixes are only valid when they are followed by an interfix.
+ * I.e. `return 0` cannot be used as `return0` since the interfix character, a whitespace
+ * plays a role on it's validation. 
+ * This is significant if the affix name is allowed to be used within variable names.
+ * The keyword `return` without this configuration of validation would mean that `return0` is looked
+ * at as an operation statement rather than a namespace thus restricting any namespaces hinting the affix name
 */
 struct Morpheme
 {
-    std::string value = "N/A";
-    std::string typehint = "udf";
+    std::string value;
+    std::string typehint;
     short precedence;
     bool unary;
     bool interfix;
 
-    Morpheme() {};
+    Morpheme(std::string val="N/A") : value(val) {};
 
-    Morpheme(std::string val) : value(val) {};
+    bool operator==(Morpheme &other);
 
-    /* Some affixes are only valid when they are followed by an interfix.
-       I.e. `return 0` cannot be used as `return0` since the interfix plays a role on it's validation. (the space in this example)
-
-       This is significant if the affix name is to be used within variable names.
-       The keyword `return` without this configuration of validation would mean that `return0` is looked
-       at as an operation statement rather than a namespace thus restricting any namespaces hinting the affix name.
-    */
-
-    bool operator == (Morpheme &other);
-
-    bool operator != (Morpheme &other);
+    bool operator!=(Morpheme &other);
 
     // Binary Operational implementations for affixes.
     virtual Morpheme infix(const Morpheme &sign, const Morpheme &operand, int stack)
@@ -110,8 +112,6 @@ struct Morpheme
     };
 
     std::string to_string();
-
-
 
 protected:
     void setTypehint(std::string val);
@@ -130,16 +130,16 @@ struct Token
     Morpheme meaning;
     Position position;
 
-    Token() : valid(false){};
+    Token() : valid(false) {};
 
     Token(const Morpheme &meaning) : valid(false){};
 
     Token(const Morpheme &meaning, const Position &position)
         : meaning(meaning), position(position), valid(true){};
 
-    bool operator == (Token &other);
+    bool operator==(Token &other);
 
-    bool operator != (Token &other);
+    bool operator!=(Token &other);
 
     bool isValid();
 

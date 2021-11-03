@@ -14,10 +14,4 @@ In analysis, *everything* consisted of source code is but abstract concepts that
 
 In theory, opening up language implementaion onto a higher level opens up syntax immitation, Meatloaf code but in Python syntax as an example. On the surface, it sounds rather useless, but there's something to be said about the capability of understanding different syntax implementation on a high level.
 
-# Grammer
-
-<expr> ::= <term> + <expr> | <term> - <expr> | <term>
-<term> ::= <factor> * <term> | <factor> / <term> | <factor>
-<factor> ::= Namespace | Affix | Infix | Prefix | Suffix
-
 

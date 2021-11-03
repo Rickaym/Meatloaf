@@ -18,45 +18,43 @@
 struct Operable
 {
     Morpheme virtual eval() = 0;
-    std::string virtual to_string()
-    {
-        return "n/a";
-    };
+    std::string virtual to_string() = 0;
 };
 
 struct Node : public Operable
 {
-    Token value;
+    Token token;
 
-    Node(Token &val) : value(val) {};
+    Node(Token &tk) : token(tk){};
 
     Morpheme eval() override
     {
-        return this->value.meaning;
+        return this->token.meaning;
     }
 
     std::string to_string() override
     {
-        return this->value.meaning.to_string();
+        return this->token.meaning.to_string();
     };
 };
 
 struct BiNode : public Operable
 {
-    std::unique_ptr<Operable> &superior;
-    Node op_token;
-    std::unique_ptr<Operable> &inferior;
+    Operable& superior;
+    Node op_node;
+    Operable& inferior;
 
-    BiNode(std::unique_ptr<Operable> &super, Node &op, std::unique_ptr<Operable> &infer) : superior(super), op_token(op), inferior(infer) {};
+    BiNode(Operable& super, Node& op, Operable& infer) 
+        : superior(super), op_node(op), inferior(infer){};
 
     Morpheme eval() override
     {
-        return this->superior->eval().infix(this->op_token.value.meaning, inferior->eval(), 0);
+        return this->superior.eval().infix(this->op_node.token.meaning, inferior.eval(), 0);
     };
 
     std::string to_string() override
     {
-        return '(' + this->superior->to_string() + this->op_token.to_string() + this->inferior->to_string() + ')';
+        return '(' + this->superior.to_string() + ' ' + this->op_node.to_string() + ' ' + this->inferior.to_string() + ')';
     };
 };
 
@@ -67,7 +65,7 @@ struct Parser
     int index = 0;
 
     Parser(std::vector<Token> tks)
-        : tokens(tks), cur_token(tks[0]) {};
+        : tokens(tks), cur_token(tks[0]){};
 
     void update();
 
@@ -75,7 +73,7 @@ struct Parser
 
     void retreat();
 
-    std::vector<std::unique_ptr<Operable>> exact();
+    std::vector<Operable*> exact();
 
-    std::unique_ptr<Operable> deduceStatement(int prc);
+    Operable* deduceStatement(int prc);
 };

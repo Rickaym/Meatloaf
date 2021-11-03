@@ -25,10 +25,10 @@ int main()
         };
         std::cout << tokens.size() << '\n';
         Parser p{tokens};
-        std::vector<std::unique_ptr<Operable>> nodes = p.exact();
-        std::cout << "... ";
+        std::vector<Operable*> nodes = p.exact();
+        std::cout << "... " << nodes.size() << ' ';
         std::cout << nodes[0]->to_string() << ' ';
-        std::cout << '\n';
+        std::cout << std::endl;
     };
     std::cout << std::endl;
     return 0;

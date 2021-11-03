@@ -5,15 +5,7 @@
 #include <iostream>
 
 #include "Lexer.h"
-
-const char g_lexicon_delimiters[2] = {' ', ';'};
-
-short LOWEST = 0;
-short LOWER = 1;
-short LOW = 2;
-short HIGH = 3;
-short HIGHER = 4;
-short HIGHEST = 5;
+#include "Task.h"
 
 void TypeGuide::advance()
 {
@@ -40,7 +32,6 @@ Position TypeGuide::capture()
 
 void TypeGuide::retreat()
 {
-    // std::cout << "Retreating..";
     this->pos--;
     this->column--;
 
@@ -63,7 +54,6 @@ void TypeGuide::updateChar()
         this->chr = '!';
         this->eof = true;
     }
-    // std::cout << this->chr << "-" << this->pos << ", ";
 };
 
 bool TypeGuide::chrIsDelim()
@@ -90,7 +80,7 @@ bool Token::operator==(Token &other)
 
 bool Token::operator!=(Token &other)
 {
-    return !this->operator!=(other);
+    return !this->operator==(other);
 };
 
 std::string Token::to_string()
@@ -112,14 +102,17 @@ void Morpheme::setUnary(bool unary)
 {
     this->unary = unary;
 }
+
 void Morpheme::setPrecedence(short prc)
 {
     this->precedence = prc;
 }
+
 void Morpheme::setInterfix(bool interfix)
 {
     this->interfix = interfix;
 }
+
 bool Morpheme::operator==(Morpheme &other)
 {
     return this->value == other.value && this->typehint == other.typehint;
@@ -127,7 +120,7 @@ bool Morpheme::operator==(Morpheme &other)
 
 bool Morpheme::operator!=(Morpheme &other)
 {
-    return !this->operator!=(other);
+    return !this->operator==(other);
 };
 
 std::string Morpheme::to_string()
@@ -181,10 +174,8 @@ struct MlNum : public Morpheme
 
     static Token conclude(TypeGuide &guide)
     {
-        // std::cout << "Starting to resolve a number.."
-        //           << "\n";
         std::string result;
-        // int dotCount = 0;
+        int dotCount = 0;
         int column = guide.column;
         int start = guide.pos;
         int line = guide.line;
@@ -192,8 +183,13 @@ struct MlNum : public Morpheme
         {
             if (guide.chr == '.')
             {
-                // dotCount++;
-                break;
+                if (dotCount == 0)
+                {
+                    dotCount++;
+                }
+                else {
+                    break;
+                }
             }
             else
             {
@@ -201,7 +197,6 @@ struct MlNum : public Morpheme
                 guide.advance();
             }
         };
-        // guide.retreat();
         int end = guide.pos;
         return Token(MlNum(result), Position(start, end, column, line));
     };
@@ -227,7 +222,6 @@ struct MlNamespace : public Morpheme
             result += guide.chr;
             guide.advance();
         };
-        // guide.retreat();
         pos.end = guide.pos;
         return Token(MlNamespace(result), pos);
     }
@@ -269,38 +263,36 @@ struct MlInfix : public Morpheme
 //////////////////////////////////////////////////////////////
 
 const MlInfix g_lexicon_infixes[8] =
-        {MlInfix("~", true, false, LOWEST),
-         MlInfix("=", true, false, LOWEST),
-         MlInfix("+", true, false, LOWER),
-         MlInfix("-", true, false, LOWER),
-         MlInfix("*", true, false, LOW),
-         MlInfix("/", true, false, LOW),
-         MlInfix("...", true, false, LOW),
-         MlInfix("return", true, true, LOW)};
+    {MlInfix("~", true, false, LOWEST),
+     MlInfix("=", true, false, LOWEST),
+     MlInfix("+", true, false, LOWER),
+     MlInfix("-", true, false, LOWER),
+     MlInfix("*", true, false, LOW),
+     MlInfix("/", true, false, LOW),
+     MlInfix("...", true, false, LOW),
+     MlInfix("return", true, true, LOW)};
 
-auto isDefinedInfix(std::string chr)
+const MlInfix* isDefinedInfix(std::string chr)
 {
     auto isEquals = [chr](MlInfix m)
     {
-        // std::cout << m.value << " VS " << chr << "\n";
         return m.value == chr;
     };
     return std::find_if(std::begin(g_lexicon_infixes), std::end(g_lexicon_infixes), isEquals);
 };
 
-/* The lexor will resolve a potential namespace into a more
-   meaningful morpheme if it's value has been predefined */
+/**
+ * Attempts to resolve a given character from the lexicon defined in the outset.
+*/
 Token MlResolve(TypeGuide &guide)
 {
-    // std::cout << "Checking if encountering namespace is predefined to be type different\n";
     std::string chr(1, guide.chr);
     Position capture = guide.capture();
     guide.advance();
-    auto res = isDefinedInfix(chr);
+    const MlInfix* res = isDefinedInfix(chr);
     if (res != std::end(g_lexicon_infixes))
     {
         capture.end = guide.pos;
-        // std::cout << "FOUND INFIX MATCH\n";
         return Token(*res, capture);
     }
 
@@ -308,8 +300,9 @@ Token MlResolve(TypeGuide &guide)
     {
         return (int)m.value.rfind(chr) != -1;
     };
-    std::vector<Morpheme> matches;
-    std::copy_if(std::begin(g_lexicon_infixes), std::end(g_lexicon_infixes), std::back_inserter(matches), startswith);
+    // DEPRECATED
+    // std::vector<Morpheme> matches;
+    // std::copy_if(std::begin(g_lexicon_infixes), std::end(g_lexicon_infixes), std::back_inserter(matches), startswith);
     while (res == std::end(g_lexicon_infixes) && guide.eof == false && guide.chrIsDelim() == false)
     {
         chr += guide.chr;
@@ -329,7 +322,6 @@ Token MlResolve(TypeGuide &guide)
     };
 };
 
-
 //////////////////////////////////////////////////////////////
 //                      Tokenizer                           //
 //////////////////////////////////////////////////////////////
@@ -344,10 +336,9 @@ std::vector<Token> Lexer::tokenize(const std::string &text)
     {
         Token tk;
         /* We step over g_lexicon_delimiters under command of the lexer, however
-           this does not mean we do the same in resolving any hinted characters */
+           this does not mean we do the same in resolving any hinted characters. */
         if (typeGuide.chrIsDelim() == true)
         {
-            // std::cout << "Stepping over " << typeGuide.chr << "\n";
             typeGuide.advance();
             continue;
         };
@@ -358,8 +349,8 @@ std::vector<Token> Lexer::tokenize(const std::string &text)
         }
         else
         {
-            /* Certain types are necessatitated to be pre-defined as the rudimentary toolset
-               Provided they are for use of the Meatloaf compiler */
+            /* Certain types exists as definitions in the lexicon so we'll check for them and if not
+               it is defaulted the incoming characters are defaulted to a namespace. */
             tk = MlResolve(typeGuide);
 
             if (tk.isValid() == false)
@@ -370,17 +361,15 @@ std::vector<Token> Lexer::tokenize(const std::string &text)
         if (tk.isValid() == true)
         {
             tokens.push_back(tk);
-            // std::cout << "Token found for " << tk.meaning.value << " stopped at ";
-            // std::cout << typeGuide.pos << "\n";
-            /* if a token is valid, it will advance the typeguide safely onto
-               the appended character */
+            /* Notice that if a token is valid, it will advance the typeguide safely onto
+               the appended character so we'll have no need to do it. */
         }
         else
         {
             return tokens;
-            // std::cout << "Invalid token found for " << typeGuide.chr << "\n";
         }
     };
+    // an EOF push_back
     tokens.push_back(Token(Morpheme()));
 
     return tokens;
