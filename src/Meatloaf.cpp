@@ -4,8 +4,8 @@
 #include <vector>
 #include <memory>
 
-#include "Lexer.h"
-#include "Parser.h"
+#include "lexer.h"
+#include "parser.h"
 
 int main()
 {
