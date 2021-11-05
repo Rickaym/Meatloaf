@@ -4,24 +4,8 @@
 #include <string>
 #include <iostream>
 
-#include "Lexer.h"
-#include "Task.h"
-
-/*C+C+++C+++C+++C+++C+++C+++C+++C+++C+++C+++C+++C+++C+++C+++C+++C+++C
-  Class:    CMyClass
-
-  Summary:  Short summary of purpose and content of CMyClass.
-            Short summary of purpose and content of CMyClass.
-
-  Methods:  MyMethodOne
-              Short description of MyMethodOne.
-            MyMethodTwo
-              Short description of MyMethodTwo.
-            CMyClass
-              Constructor.
-            ~CMyClass
-              Destructor.
-C---C---C---C---C---C---C---C---C---C---C---C---C---C---C---C---C-C*/
+#include "lexer.h"
+#include "task.h"
 
 void TypeGuide::advance()
 {
