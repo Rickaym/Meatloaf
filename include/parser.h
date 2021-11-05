@@ -2,7 +2,7 @@
 #include <vector>
 #include <memory>
 
-#include "Lexer.h"
+#include "lexer.h"
 
 /**
  * @brief A lexeme a singular or a combination of morphemes, lexemes that look-a-like does not change

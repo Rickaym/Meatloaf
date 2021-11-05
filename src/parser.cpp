@@ -2,8 +2,8 @@
 #include <iostream>
 #include <memory>
 
-#include "Lexer.h"
-#include "Parser.h"
+#include "lexer.h"
+#include "parser.h"
 
 void Parser::update()
 {

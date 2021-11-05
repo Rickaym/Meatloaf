@@ -4,8 +4,8 @@
 #include <string>
 #include <iostream>
 
-#include "Lexer.h"
-#include "Task.h"
+#include "lexer.h"
+#include "task.h"
 
 /*C+C+++C+++C+++C+++C+++C+++C+++C+++C+++C+++C+++C+++C+++C+++C+++C+++C
   Class:    CMyClass
