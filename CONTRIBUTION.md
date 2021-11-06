@@ -9,6 +9,8 @@
 
 `src` ::= a folder that contains source code or implementation files .cpp
 
+`build` ::= a folder that is sometimes there for holding onto build scripts, half-built code, other stuff related to the compilation process
+
 # Style Guide
 
 Google's CPP standards should be followed, here's a gist.
@@ -43,11 +45,23 @@ The names of all types — classes, structs, type aliases, enums, and type templat
 Type names should start with a capital letter and have a capital letter for each new word.
 
 3.The names of variables (including function parameters) and data members are all lowercase, 
-with underscores between words. Data members of classes (but not structs) additionally have trailing underscores. 
-For instance: a_local_variable, a_struct_data_member, a_class_data_member_.
+with underscores between words. 
 
 4. Private static and non-static, are named like ordinary nonmember variables, but with a trailing underscore whereas public static and non-static members
 are named exactly like ordinary nonmember variables.
 
-5. Variables declared constexpr or const, and whose value is fixed for the duration of the program, are named with a leading "k" followed by mixed case. 
-Underscores can be used as separators in the rare cases where capitalization cannot be used for separation.
+5. Variables declared constexpr or const, and whose value is fixed for the duration of the program, are named with a leading "g_" with snake case.
+
+6. Function members should be name with snake_case.
+
+## Comments
+
+1. Use java style comments without initiating asterisks every newline. The comment should appear right before the declaration of the class, struct or member.
+
+```
+/**
+ The trivial static object 
+ finding my way homeeeee 
+ What is the meaning of that 
+*/
+```

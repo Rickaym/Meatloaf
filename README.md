@@ -5,7 +5,7 @@ Copyright (c) 2001-2021 Preheating.
 2. **[Functionality](#functionality)**
 3. **[Execution](#execution)**
 
-Maintainers: [Ricky](https://github.com/Rickaym) & [Kekcy](https://github.com/KekOnTheWorld)
+Maintainers: [Ricky](https://github.com/Rickaym) & [Kecky](https://github.com/KekOnTheWorld)
 
 # Abstraction
 In extension to majority of main-stream high level languages, this is an attempt to make high level abstractions to often ignored core backbone language implementation details. Concepts such as **keywords** and **qualifiers** are some of the few barebone level ideas that exists only behind the scene. In most cases, the idea of a user-creatable keyword, type qualifier or an operator is impossible and taboo.. Let's change that.
