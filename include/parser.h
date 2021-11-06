@@ -1,24 +1,28 @@
 #pragma once
+
 #include <vector>
 #include <memory>
+#include <ostream>
 
 #include "lexer.h"
 
 /**
- * @brief A lexeme a singular or a combination of morphemes, lexemes that look-a-like does not change
- * meaning.
- *
- * For instance -1  is a lexeme that represents a negative number one.
- * 1+2 is a lexeme that represents a positive number one being added to a positive number 2.
- *
- * 1 alone can also be a lexeme in some situations. All lexemes has (or are) morphemes but not all
- * morphemes can be lexemes.
+  A lexeme a singular or a combination of morphemes, lexemes that look-a-like does not change
+  meaning.
+ 
+  For instance -1  is a lexeme that represents a negative number one.
+  1+2 is a lexeme that represents a positive number one being added to a positive number 2.
+ 
+  1 alone can also be a lexeme in some situations. All lexemes has (or are) morphemes but not all
+  morphemes can be lexemes.
 */
 
 struct Operable
 {
-    Morpheme virtual eval() = 0;
-    std::string virtual to_string() = 0;
+    Morpheme virtual eval() const = 0;
+    std::string virtual to_string() const = 0;
+
+    friend std::ostream& operator<<(std::ostream& os, const Operable& n);
 };
 
 struct Node : public Operable
@@ -27,39 +31,23 @@ struct Node : public Operable
 
     Node(Token tk) : token(tk){};
 
-    Morpheme eval() override
-    {
-        return this->token.meaning;
-    }
+    Morpheme eval() const override;
 
-    std::string to_string() override
-    {
-        return this->token.meaning.to_string();
-    };
-
-    friend std::ostream& operator<<(std::ostream& os, const Node& n);
+    std::string to_string() const override;
 };
 
 struct BiNode : public Operable
 {
-    Operable& superior;
+    std::unique_ptr<Operable> superior;
     Node op_node;
-    Operable& inferior;
+    std::unique_ptr<Operable> inferior;
 
-    BiNode(Operable& super, Node& op, Operable& infer) 
-        : superior(super), op_node(op), inferior(infer){};
+    BiNode(std::unique_ptr<Operable> super, Node& op, std::unique_ptr<Operable> infer)
+        : superior(std::move(super)), op_node(op), inferior(std::move(infer)){};
 
-    Morpheme eval() override
-    {
-        return this->superior.eval().infix(this->op_node.token.meaning, inferior.eval(), 0);
-    };
+    Morpheme eval() const;
 
-    std::string to_string() override
-    {
-        return '(' + this->superior.to_string() + ' ' + this->op_node.to_string() + ' ' + this->inferior.to_string() + ')';
-    };
-
-    friend std::ostream& operator<<(std::ostream& os, const BiNode& n);
+    std::string to_string() const;
 };
 
 struct Parser
@@ -69,7 +57,7 @@ struct Parser
     int index = 0;
 
     Parser(std::vector<Token> tks)
-        : tokens(tks), cur_token(tks[0]){};
+        : tokens(tks), cur_token(tks[0]) {};
 
     void update();
 
@@ -77,7 +65,7 @@ struct Parser
 
     void retreat();
 
-    std::vector<Operable*> ast();
+    std::vector<std::unique_ptr<Operable>> ast();
 
-    Operable* deduce_statement(int prc);
-}
+    std::unique_ptr<Operable> deduce_statement(int prc);
+};
