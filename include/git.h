@@ -1,5 +1,5 @@
 #pragma once
 
-#define GIT_REV "N/A"
-#define GIT_TAG "N/A"
-#define GIT_BRANCH "N/A"
+#define GIT_REV "+"
+#define GIT_TAG ""
+#define GIT_BRANCH "main"
