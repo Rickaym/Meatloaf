@@ -25,7 +25,7 @@ struct Node : public Operable
 {
     Token token;
 
-    Node(Token &tk) : token(tk){};
+    Node(Token tk) : token(tk){};
 
     Morpheme eval() override
     {
@@ -36,6 +36,8 @@ struct Node : public Operable
     {
         return this->token.meaning.to_string();
     };
+
+    friend std::ostream& operator<<(std::ostream& os, const Node& n);
 };
 
 struct BiNode : public Operable
@@ -56,6 +58,8 @@ struct BiNode : public Operable
     {
         return '(' + this->superior.to_string() + ' ' + this->op_node.to_string() + ' ' + this->inferior.to_string() + ')';
     };
+
+    friend std::ostream& operator<<(std::ostream& os, const BiNode& n);
 };
 
 struct Parser
@@ -73,7 +77,7 @@ struct Parser
 
     void retreat();
 
-    std::vector<Operable*> exact();
+    std::vector<Operable*> ast();
 
-    Operable* deduceStatement(int prc);
-};
+    Operable* deduce_statement(int prc);
+}

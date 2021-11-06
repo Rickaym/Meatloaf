@@ -25,26 +25,26 @@ void Parser::retreat()
     this->update();
 };
 
-std::vector<Operable*> Parser::exact()
+std::vector<Operable*> Parser::ast()
 {
     std::vector<Operable*> nodes;
-    nodes.push_back(this->deduceStatement(0));
+    nodes.push_back(this->deduce_statement(0));
     return nodes;
 };
 
-Operable* Parser::deduceStatement(int prc)
+Operable* Parser::deduce_statement(int prc)
 {
     if (prc == 6)
     {
         return new Node(this->cur_token);
     };
-    Operable* superior = this->deduceStatement(prc + 1);
+    Operable* superior = this->deduce_statement(prc + 1);
     this->advance();
     Node op = this->cur_token;
     while (op.token.meaning.precedence == prc && op.token.meaning.value != "N/A")
     {
         this->advance();
-        Operable* inferior = this->deduceStatement(prc + 1);
+        Operable* inferior = this->deduce_statement(prc + 1);
         // TODO: free da pointers
         superior = new BiNode(*superior, op, *inferior);
         this->advance();

@@ -4,27 +4,37 @@
 #include <string>
 #include <cstddef>
 
-const short LOWEST = 0;
-const short LOWER = 1;
-const short LOW = 2;
-const short HIGH = 3;
-const short HIGHER = 4;
-const short HIGHEST = 5;
+#include "errors.h"
+
+/**
+ Precedence (prc) constants.
+*/
+const short g_lowest_prc = 0;
+const short g_low_prc = 1;
+const short g_high_prc = 2;
+const short g_highest_prc = 3;
 
 const char g_lexicon_delimiters[2] = {' ', ';'};
 
-struct Position;
+
 
 /**
- * @brief A type guide used to feed characters into the lexer
- * during tokenization, this isn't part of the lexer class as opposed to
- * the parser having it's own internal guide.
+ The static source object shared by the different parts of the compiler.
+*/
+struct Source
+{
+    static std::string text;
+};
+
+/**
+  A type guide used to feed characters into the lexer
+  during tokenization, this isn't part of the lexer class as opposed to
+  the parser having it's own internal guide.
 */
 struct TypeGuide
 {
-    const std::string text;
     int pos = -1;
-    char chr = '+';
+    char chr = '.';
     int len = 0;
     int column = 0;
     int line = 1;
@@ -32,18 +42,18 @@ struct TypeGuide
     bool newLine = false;
     bool eof = false;
 
-    TypeGuide(const std::string& text) : text(text) {};
+    TypeGuide() = default;
 
     void advance();
 
     void retreat();
 
-    bool chrIsDelim();
+    bool is_delimiter();
 
     Position capture();
 
 private:
-    void updateChar();
+    void update_char();
 };
 
 /**
@@ -93,32 +103,40 @@ struct Morpheme
     bool unary;
     bool interfix;
 
-    Morpheme(std::string val="N/A") : value(val) {};
+    Morpheme() = default;
+
+    Morpheme(Morpheme& v) {};
+
+    Morpheme(std::string val) : valid_(false) {};
+    
+    Morpheme(std::string val) : value(val), valid_(true) {};
+
+    Morpheme(std::string val, std::string tph, bool isUnary, bool itfx, short prc)
+        : value(val), typehint(tph), precedence(prc), interfix(itfx), unary(isUnary) {};
 
     bool operator==(Morpheme &other);
 
     bool operator!=(Morpheme &other);
 
     // Binary Operational implementations for affixes.
-    virtual Morpheme infix(const Morpheme &sign, const Morpheme &operand, int stack)
-    {
-        return *this;
-    };
+    virtual Morpheme infix(const Morpheme& sign, const Morpheme& operand, int stack) { return Morpheme(); };
 
     // Unary operational implementations for infixes with an absent operand.
-    virtual Morpheme infix(const Morpheme &sign, int stack)
-    {
-        return *this;
-    };
+    virtual Morpheme infix(const Morpheme& sign, int stack) { return Morpheme(); };
 
     std::string to_string();
 
+    bool valid();;
+
+private:
+    bool valid_;
+
 protected:
-    void setTypehint(std::string val);
-    void setPrecedence(short prc);
-    void setUnary(bool unary);
-    void setInterfix(bool intfx);
-    void setValue(std::string val);
+    void set_typehint(std::string val);
+    void set_precedence(short prc);
+    void set_unary(bool unary);
+    void set_interfix(bool intfx);
+    void set_value(std::string val);
 };
 
 /**
@@ -130,26 +148,92 @@ struct Token
     Morpheme meaning;
     Position position;
 
-    Token() : valid(false) {};
+    Token() : valid_(false) {};
 
-    Token(const Morpheme &meaning) : valid(false){};
+    Token(Morpheme meaning) : valid_(false) {};
+     
+    Token(Morpheme meaning, Position position)
+        : meaning(meaning), position(position), valid_(true) {};
 
-    Token(const Morpheme &meaning, const Position &position)
-        : meaning(meaning), position(position), valid(true){};
+    bool operator==(Token& other);
 
-    bool operator==(Token &other);
+    bool operator!=(Token& other);
 
-    bool operator!=(Token &other);
-
-    bool isValid();
+    bool valid();
 
     std::string to_string();
 
 private:
-    bool valid;
+    bool valid_;
 };
 
-struct Lexer
+struct LexxedResults
 {
-    static std::vector<Token> tokenize(const std::string &text);
+    std::unique_ptr<BaseException>& error;
+    std::vector<Token> tokens;
+    
+    LexxedResults(std::vector<Token> tks) 
+        : tokens(tks), error(std::make_unique<BaseException>()), failed_(false) {};
+
+    LexxedResults(std::vector<Token> tks, std::unique_ptr<BaseException>& fault) 
+        : tokens(tks), error(fault), failed_(true) {};
+
+    bool failed();
+
+private:
+    bool failed_;
+}; 
+
+struct MlNum : public Morpheme
+{
+    MlNum() = default;
+
+    MlNum(std::string val)
+    {
+        this->set_value(val);
+        this->set_typehint(__func__);
+    };
+
+    MlNum(int val)
+    {
+        this->set_value(std::to_string(val));
+        this->set_typehint(__func__);
+    };
+
+    Morpheme infix(const Morpheme& op, const Morpheme& operand, int stack);
+
+    Morpheme infix(const Morpheme& op, int stack) override;
+
+    Token conclude(TypeGuide& guide) const;
 };
+
+struct MlNamespace : public Morpheme
+{
+    MlNamespace() = default;
+
+    MlNamespace(std::string val)
+    {
+        this->set_value(val);
+        this->set_typehint(__func__);
+    };
+
+    static Token resolve(TypeGuide& guide, std::string result, Position pos);
+
+    /**
+      Continues conclusion fron partial result.
+    */
+    Token conConclude(TypeGuide& guide, std::string result, Position pos) const;
+
+    Token conclude(TypeGuide& guide) const;
+};
+
+struct MlInfix : public Morpheme
+{
+    MlInfix(std::string val, bool isUnary, bool interfix, short precedence)
+        : Morpheme(val, __func__, isUnary, interfix,precedence) {};
+};
+
+
+LexxedResults tokenize();
+
+
