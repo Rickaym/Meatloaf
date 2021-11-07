@@ -3,6 +3,11 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# Platform builds
+x64
+x86
+x32
+
 *.ideas
 
 # User-specific files
@@ -13,7 +18,8 @@
 *.sln.docstates
 *.sln
 *.vcxproj
-.vscode
+*.vscode
+*.filters
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
