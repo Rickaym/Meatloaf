@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.2)
 
-project(Meatloaf)
+project(Meatloaf VERSION 1.0)
 
 set(CMAKE_SOURCE_DIR, "..")
+
 
 execute_process(
     COMMAND bash -c "git diff --quiet --exit-code || echo +"
