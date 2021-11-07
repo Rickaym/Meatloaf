@@ -5,45 +5,65 @@
 #include "lexer.h"
 #include "parser.h"
 
+
+void Task::success(std::unique_ptr<Operable>&& val)
+{
+    this->value = std::move(val);
+}
+
+void Task::success(std::unique_ptr<Operable>& val)
+{
+    this->value = std::move(val);
+}
+
+void Task::failure(std::unique_ptr<BaseException>&& fault)
+{
+    this->error = std::move(fault);
+    this->failed = true;
+}
+
+void Task::failure(std::unique_ptr<BaseException>& fault)
+{
+    this->error = std::move(fault);
+    this->failed = true;
+}
+
 std::ostream& operator<<(std::ostream& os, const Operable& n)
 {
     os << n.to_string();
     return os;
 }
 
-void Parser::update()
-{
-    if (this->index < (int)this->tokens.size())
-    {
-        this->cur_token = this->tokens[this->index];
-    };
-};
-
 void Parser::advance()
 {
     this->index++;
-    this->update();
+};
+
+Token& Parser::cur_token()
+{
+    return this->tokens[this->index];
 };
 
 void Parser::retreat()
 {
     this->index--;
-    this->update();
 };
 
 Morpheme Node::eval() const 
 {
-    return this->token.meaning;
+    // return this->token.morpheme;
+    return Morpheme();
 }
 
 std::string Node::to_string() const
 {
-    return this->token.meaning.to_string();
+    return this->token.morpheme->to_string();
 };
 
 Morpheme BiNode::eval() const 
 {
-    return this->superior->eval().infix(this->op_node.token.meaning, inferior->eval(), 0);
+    //return this->superior->eval().infix(this->op_node.token.morpheme, inferior->eval(), 0);
+    return Morpheme();
 };
 
 std::string BiNode::to_string() const 
@@ -52,30 +72,50 @@ std::string BiNode::to_string() const
 };
 
 
-std::vector<std::unique_ptr<Operable>> Parser::ast()
+ParsedResult Parser::ast()
 {
     std::vector<std::unique_ptr<Operable>> nodes;
-    nodes.push_back(this->deduce_statement(0));
-    return nodes;
+    Task tsk;
+    this->deduce_statement(0, tsk);
+    if (tsk.failed == true)
+        return ParsedResult(std::move(tsk.error));
+    else
+        nodes.push_back(std::move(tsk.value));
+    return ParsedResult(std::move(nodes));
 };
 
-std::unique_ptr<Operable> Parser::deduce_statement(int prc)
+void Parser::deduce_statement(int prc, Task& tsk)
 {
-    if (prc == 6)
+    if (prc == (g_highest_prc + 1))
     {
-        return std::make_unique<Node>(this->cur_token);
+        tsk.success(std::make_unique<Node>(this->cur_token()));
+        return;
     };
-    std::unique_ptr<Operable> superior = this->deduce_statement(prc + 1);
+    this->deduce_statement(prc + 1, tsk);
+    if (tsk.failed == true) return;
+    std::unique_ptr<Operable> superior = std::move(tsk.value);
     this->advance();
-    Node op = this->cur_token;
-    while (op.token.meaning.precedence == prc && op.token.meaning.value != "N/A")
+    Token op = std::move(this->cur_token());
+    /* BIGGGGGGGGG PROBLEM HERE
+       1>D:\Programming\C Family\Meatloaf\include\parser.h(63,5): message : see declaration of 'BiNode::BiNode'
+       1>D:\Programming\C Family\Meatloaf\src\parser.cpp(105): message : see reference to function template instantiation 'std::unique_ptr<BiNode,std::default_delete<BiNode>> std::make_unique<BiNode,std::unique_ptr<Operable,std::default_delete<Operable>>,Token,std::unique_ptr<Operable,std::default_delete<Operable>>,0>(std::unique_ptr<Operable,std::default_delete<Operable>> &&,Token &&,std::unique_ptr<Operable,std::default_delete<Operable>> &&)' being compiled
+       1>Done building project "Meatloaf.vcxproj" -- FAILED. */
+    while (op.valid == true && op.morpheme->precedence == prc)
     {
         this->advance();
-        std::unique_ptr<Operable> inferior = this->deduce_statement(prc + 1);
-        superior = std::make_unique<BiNode>(std::move(superior), op, std::move(inferior));
+        this->deduce_statement(prc + 1, tsk);
+        if (tsk.failed == true) return;
+        std::unique_ptr<Operable> inferior = std::move(tsk.value);
+        superior = std::make_unique<BiNode>(std::move(superior), std::move(op), std::move(inferior));
         this->advance();
-        op = this->cur_token;
+        op = std::move(this->cur_token());
     };
+    if (prc == 0 && this->cur_token().valid)
+    {
+        tsk.failure(std::make_unique<SyntaxError>(this->cur_token().position));
+        return;
+    }
     this->retreat();
-    return superior;
+    tsk.value = std::move(superior);
+    return;
 };

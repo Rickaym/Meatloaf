@@ -27,7 +27,7 @@ private:
 
 struct SyntaxError : public BaseException
 {
-	SyntaxError(Position pos) : BaseException("Unexpected character or token found", pos) {};
+	SyntaxError(Position pos) : BaseException("SyntaxError: Unexpected character or token found", pos) {};
 };
 
 
