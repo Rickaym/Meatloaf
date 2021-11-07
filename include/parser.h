@@ -5,6 +5,7 @@
 #include <ostream>
 
 #include "lexer.h"
+#include "errors.h"
 
 /**
   A lexeme a singular or a combination of morphemes, lexemes that look-a-like does not change
@@ -25,11 +26,28 @@ struct Operable
     friend std::ostream& operator<<(std::ostream& os, const Operable& n);
 };
 
+struct Task
+{
+    bool failed;
+    std::unique_ptr<Operable> value;
+    std::unique_ptr<BaseException> error;
+
+    Task() = default;
+
+    void success(std::unique_ptr<Operable>&& val);
+
+    void success(std::unique_ptr<Operable>& val);
+
+    void failure(std::unique_ptr<BaseException>&& fault);
+
+    void failure(std::unique_ptr<BaseException>& fault);
+};
+
 struct Node : public Operable
 {
     Token token;
 
-    Node(Token tk) : token(tk){};
+    Node(Token& tk) : token(std::move(tk)) {};
 
     Morpheme eval() const override;
 
@@ -43,29 +61,45 @@ struct BiNode : public Operable
     std::unique_ptr<Operable> inferior;
 
     BiNode(std::unique_ptr<Operable> super, Node& op, std::unique_ptr<Operable> infer)
-        : superior(std::move(super)), op_node(op), inferior(std::move(infer)){};
+        : superior(std::move(super)), op_node(std::move(op)), inferior(std::move(infer)){};
 
     Morpheme eval() const;
 
     std::string to_string() const;
 };
 
+struct ParsedResult
+{
+    bool failed;
+    std::vector<std::unique_ptr<Operable>> nodes;
+    std::unique_ptr<BaseException> error;
+
+    ParsedResult(std::vector<std::unique_ptr<Operable>> nds)
+        : nodes(std::move(nds)), failed(false) {};
+
+    ParsedResult(std::unique_ptr<BaseException> fault)
+        : error(std::move(fault)), failed(true) {};
+
+};
+
+
 struct Parser
 {
     std::vector<Token> tokens;
-    Token cur_token;
     int index = 0;
 
-    Parser(std::vector<Token> tks)
-        : tokens(tks), cur_token(tks[0]) {};
+    Parser(std::vector<Token>& tks)
+        : tokens(std::move(tks)) {};
 
-    void update();
+    Token& cur_token();
 
     void advance();
 
     void retreat();
 
-    std::vector<std::unique_ptr<Operable>> ast();
+    ParsedResult ast();
 
-    std::unique_ptr<Operable> deduce_statement(int prc);
+    void Parser::deduce_statement(int prc, Task& tsk);
 };
+
+

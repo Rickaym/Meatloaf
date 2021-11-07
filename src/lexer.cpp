@@ -6,18 +6,12 @@
 #include <memory>
 
 #include "lexer.h"
-#include "task.h"
 #include "errors.h"
 
 
-bool Token::valid() const
-{
-    return this->valid_;
-};
-
 bool Token::operator==(Token &other) 
 {
-    return this->valid() && other.valid() && this->meaning == other.meaning;
+    return this->valid && other.valid && this->morpheme == other.morpheme;
 };
 
 bool Token::operator!=(Token &other) 
@@ -33,12 +27,15 @@ std::ostream& operator<<(std::ostream& os, const Token& n)
 
 std::string Token::to_string() const 
 {
-    return this->meaning.to_string() + " \\" + this->position.to_string() + "\\";
+    if (this->valid == true)
+        return  this->morpheme->to_string() + " \\" + this->position.to_string() + "\\";
+    else
+        return " \\" + this->position.to_string() + "\\";
 };
 
 bool Morpheme::operator==(Morpheme &other)
 {
-    return this->value == other.value && this->typehint == other.typehint;
+    return this->characters == other.characters && this->typehint == other.typehint;
 };
 
 bool Morpheme::operator!=(Morpheme &other)
@@ -48,15 +45,11 @@ bool Morpheme::operator!=(Morpheme &other)
 
 std::string Morpheme::to_string() const
 {
-    return this->value;
+    return this->characters;
 };
 
-bool Morpheme::valid()
-{
-    return this->valid_;
-}
 
-Token MlNum::conclude(TypeGuide &guide) const
+Token MlNum::conclude(TypeGuide &guide)
 {
     std::string result;
     int dotCount = 0;
@@ -80,7 +73,7 @@ Token MlNum::conclude(TypeGuide &guide) const
         guide.advance();
     };
     pos.end = guide.pos;
-    return Token(MlNum(result), pos);
+    return Token(std::make_unique<MlNum>(result), pos);
 };
 
 Token MlNamespace::resolve(TypeGuide &guide, std::string result, Position pos)
@@ -91,34 +84,24 @@ Token MlNamespace::resolve(TypeGuide &guide, std::string result, Position pos)
         guide.advance();
     };
     pos.end = guide.pos;
-    return Token(MlNamespace(result), pos);
+    return Token(std::make_unique<MlNamespace>(result), pos);
 }
 
-Token MlNamespace::conConclude(TypeGuide &guide, std::string result, Position pos) const
+Token MlNamespace::conConclude(TypeGuide &guide, std::string result, Position pos)
 {
     return MlNamespace::resolve(guide, result, pos);
 };
 
-Token MlNamespace::conclude(TypeGuide &guide) const
+Token MlNamespace::conclude(TypeGuide &guide)
 {
     return MlNamespace::resolve(guide, "", guide.capture());
 };
-
-const MlInfix g_lexicon_infixes[8] =
-    {MlInfix("~", true, false, g_lowest_prc),
-     MlInfix("=", true, false, g_lowest_prc),
-     MlInfix("+", true, false, g_lowest_prc),
-     MlInfix("-", true, false, g_lowest_prc),
-     MlInfix("*", true, false, g_low_prc),
-     MlInfix("/", true, false, g_low_prc),
-     MlInfix("...", true, false, g_low_prc),
-     MlInfix("return", true, true, g_low_prc)};
 
 const MlInfix* is_defined_infix(std::string chr)
 {
     auto isEquals = [chr](MlInfix m)
     {
-        return m.value == chr;
+        return m.characters == chr;
     };
     return std::find_if(std::begin(g_lexicon_infixes), std::end(g_lexicon_infixes), isEquals);
 };
@@ -136,12 +119,12 @@ Token MlResolve(TypeGuide &guide)
     {
         MlInfix mph = *res;
         capture.end = guide.pos;
-        return Token(mph, capture);
+        return Token(std::make_unique<MlInfix>(mph), capture);
     }
 
     auto startswith = [chr](Morpheme m)
     {
-        return (int)m.value.rfind(chr) != -1;
+        return (int)m.characters.rfind(chr) != -1;
     };
 
     while (res == std::end(g_lexicon_infixes) && guide.eof == false && guide.is_delimiter() == false)
@@ -151,25 +134,20 @@ Token MlResolve(TypeGuide &guide)
         guide.advance();
     };
     capture.end = guide.pos;
-    if (res != std::end(g_lexicon_infixes) && !((*res).interfix == true && (guide.is_delimiter() == false && guide.eof == false)))
+    if (res != std::end(g_lexicon_infixes) && !((*res).isolated == true && (guide.is_delimiter() == false && guide.eof == false)))
     {
         MlInfix mph = *res;
-        return Token(mph, capture);
+        return Token(std::make_unique<MlInfix>(mph), capture);
     }
     else
     {
         /* Case where lexxed component is not predefined as an infix
            we pass it over to conclude a namespace */
-        return MlNamespace().conConclude(guide, chr, capture);
+        return MlNamespace::conConclude(guide, chr, capture);
     };
 };
 
-bool LexxedResults::failed() const
-{
-    return this->failed_;
-}
-
-LexxedResults tokenize()
+LexxedResult tokenize()
 {
     std::vector<Token> tokens;
     TypeGuide typeGuide;
@@ -188,7 +166,7 @@ LexxedResults tokenize()
 
         if (std::isdigit(typeGuide.chr) != 0)
         {
-            tk = MlNum().conclude(typeGuide);
+            tk = MlNum::conclude(typeGuide);
         }
         else
         {
@@ -196,24 +174,24 @@ LexxedResults tokenize()
                it is defaulted the incoming characters are defaulted to a namespace. */
             tk = MlResolve(typeGuide);
 
-            if (tk.valid() == false)
+            if (tk.valid == false)
             {
-                tk = MlNamespace().conclude(typeGuide);
+                tk = MlNamespace::conclude(typeGuide);
             };
         };
-        if (tk.valid() == true)
+        if (tk.valid == true)
         {
-            tokens.push_back(tk);
+            tokens.push_back(std::move(tk));
             /* Notice that if a token is valid, it will advance the typeguide safely onto
                the appended character so we'll have no need to do it. */
         }
         else
         {
             std::unique_ptr<BaseException> fault = std::make_unique<SyntaxError>(tk.position);
-            return LexxedResults(std::move(fault));
+            return LexxedResult(fault);
         }
     };
     // an EOF push_back
     tokens.push_back(Token());
-    return LexxedResults(tokens);
+    return LexxedResult(tokens);
 };

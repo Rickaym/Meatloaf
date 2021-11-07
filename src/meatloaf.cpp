@@ -2,7 +2,7 @@
 #include <sstream>
 #include <vector>
 #include <memory>
-#include <string.h>
+#include <string>
 
 #include "lexer.h"
 #include "parser.h"
@@ -53,11 +53,11 @@ void interactive_grill() {
         std::getline(std::cin, cmdlet);
         Source::text = cmdlet;
         Source::uri = "Interactive Grill";
-        LexxedResults lres = tokenize();
-        if (lres.failed() == false)
+        LexxedResult lres = tokenize();
+        if (lres.failed == false)
         {
             std::cout << "... ";
-            for (Token tk : lres.tokens)
+            for (Token const& tk : lres.tokens)
             {
                 std::cout << tk << ' ';
             };
@@ -69,10 +69,16 @@ void interactive_grill() {
             continue;
         }
 
-        Parser p(lres.tokens);
-        std::vector<std::unique_ptr<Operable>> nodes = p.ast();
-        std::cout << *(nodes[0]);
-        std::cout << std::endl;
+        Parser p(std::move(lres.tokens));
+        ParsedResult pres = p.ast();
+        if (pres.failed == true)
+        {
+            std::cout << *(pres.error) << std::endl;
+        }
+        else
+        {
+            std::cout << *(pres.nodes[0]) << std::endl;
+        }
     }
 }
 
@@ -83,9 +89,9 @@ int main(int argc, char* argv[]) {
         interactive_grill();
     } else {
         char* arg = argv[1];
-        if(strcmp(arg, "--help")==0 || strcmp(arg, "-h")==0) {
+        if(arg == "--help" || arg == "-h") {
             print_help();
-        } else if(strcmp(arg, "--version")==0 || strcmp(arg, "-v")==0) {
+        } else if(arg == "--version" || arg == "-v") {
             print_version();
         } else std::cout << "Invalid argument " << arg << "! use " << argv[0] << " --help for help!\n";
     }
