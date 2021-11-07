@@ -2,7 +2,7 @@
 #include <sstream>
 #include <vector>
 #include <memory>
-#include <string.h>
+#include <string>
 
 #include "lexer.h"
 #include "parser.h"
