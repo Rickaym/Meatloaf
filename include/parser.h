@@ -20,34 +20,26 @@
 
 struct Operable
 {
+    bool valid;
+
     Morpheme virtual eval() const = 0;
+    
     std::string virtual to_string() const = 0;
 
     friend std::ostream& operator<<(std::ostream& os, const Operable& n);
-};
-
-struct Task
-{
-    bool failed;
-    std::unique_ptr<Operable> value;
-    std::unique_ptr<BaseException> error;
-
-    Task() = default;
-
-    void success(std::unique_ptr<Operable>&& val);
-
-    void success(std::unique_ptr<Operable>& val);
-
-    void failure(std::unique_ptr<BaseException>&& fault);
-
-    void failure(std::unique_ptr<BaseException>& fault);
 };
 
 struct Node : public Operable
 {
     Token token;
 
-    Node(Token& tk) : token(std::move(tk)) {};
+    Node(Token& tk) : token(tk) 
+    {
+        if (!tk.valid) 
+        {
+            this->valid = false;
+        }
+    };
 
     Morpheme eval() const override;
 
@@ -57,15 +49,38 @@ struct Node : public Operable
 struct BiNode : public Operable
 {
     std::unique_ptr<Operable> superior;
-    Node op_node;
+    Token op_token;
     std::unique_ptr<Operable> inferior;
 
-    BiNode(std::unique_ptr<Operable> super, Node& op, std::unique_ptr<Operable> infer)
-        : superior(std::move(super)), op_node(std::move(op)), inferior(std::move(infer)){};
+    BiNode(std::unique_ptr<Operable>& super, Token& op_token, std::unique_ptr<Operable>& infer)
+        : superior(std::move(super)), op_token(op_token), inferior(std::move(infer))
+    {
+        if (!op_token.valid)
+        {
+            this->valid = false;
+        }
+    };
 
     Morpheme eval() const;
 
     std::string to_string() const;
+};  
+
+struct Task
+{
+    bool failed = false;
+    std::unique_ptr<Operable> value;
+    std::unique_ptr<BaseException> error;
+
+    Task() = default;
+
+    void success(std::unique_ptr<Operable>&& val);
+       
+    void success(std::unique_ptr<Operable>& val);
+
+    void failure(std::unique_ptr<BaseException>&& val);
+
+    void failure(std::unique_ptr<BaseException>& fault);
 };
 
 struct ParsedResult
@@ -74,14 +89,13 @@ struct ParsedResult
     std::vector<std::unique_ptr<Operable>> nodes;
     std::unique_ptr<BaseException> error;
 
-    ParsedResult(std::vector<std::unique_ptr<Operable>> nds)
+    ParsedResult(std::vector<std::unique_ptr<Operable>>& nds)
         : nodes(std::move(nds)), failed(false) {};
 
-    ParsedResult(std::unique_ptr<BaseException> fault)
+    ParsedResult(std::unique_ptr<BaseException>& fault)
         : error(std::move(fault)), failed(true) {};
 
 };
-
 
 struct Parser
 {
@@ -89,9 +103,9 @@ struct Parser
     int index = 0;
 
     Parser(std::vector<Token>& tks)
-        : tokens(std::move(tks)) {};
+        : tokens(tks) {};
 
-    Token& cur_token();
+    Token cur_token();
 
     void advance();
 
@@ -99,7 +113,7 @@ struct Parser
 
     ParsedResult ast();
 
-    void Parser::deduce_statement(int prc, Task& tsk);
+    void Parser::deduce_statement(int&& prc, Task& tsk);
 };
 
 

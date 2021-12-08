@@ -19,12 +19,13 @@ const short g_highest_prc = 3;
 
 const char g_lexicon_delimiters[2] = {' ', ';'};
 
-enum Typehints
+enum class Types
 {
     mlnum,
     mlnamespace,
     mlinfix,
     mlaffix,
+    eof
 };
 
 
@@ -50,28 +51,16 @@ enum Typehints
 struct Morpheme
 {
     std::string characters;
-    Typehints typehint;
-    bool valid;
+    Types typehint;
     short precedence;
     bool hyphenated;
     bool isolated;
     bool unary;
     bool binary;
 
-    Morpheme() = default;
-
     bool operator==(Morpheme &other);
 
     bool operator!=(Morpheme &other);
-
-    std::string to_string() const;
-
-protected:
-    Morpheme(std::string crs, Typehints tph)
-        : characters(crs), typehint(tph), valid(true) {};
-    
-    Morpheme(std::string crs, Typehints tph, short prc, bool hyp, bool islt, bool unary, bool binary)
-        : characters(crs), typehint(tph), precedence(prc), hyphenated(hyp), isolated(islt), unary(unary), binary(binary) {};
 };
 
 /**
@@ -80,7 +69,7 @@ protected:
 */
 struct Token
 {
-    std::unique_ptr<Morpheme> morpheme;
+    Morpheme morpheme;
     Position position;
     bool valid;
 
@@ -89,8 +78,8 @@ struct Token
     Token(Position position)
         : position(position), valid(false) {};
 
-    Token(std::unique_ptr<Morpheme> means, Position position)
-        : morpheme(std::move(means)), position(position), valid(true) {};
+    Token(Morpheme means, Position pos)
+        : morpheme(means), position(pos), valid(true) {};
 
     bool operator==(Token& other);
 
@@ -101,49 +90,20 @@ struct Token
     friend std::ostream& operator<<(std::ostream& os, const Token& n);
 };
 
-struct MlNum : public Morpheme
-{
-    MlNum() = default;
+Morpheme mlNumInfix(int stack, const Morpheme& op, const Morpheme& operand);
 
-    MlNum(std::string val) : Morpheme(val, Typehints::mlnum) {};
+Morpheme mlNumInfix(int stack, const Morpheme& op);
 
-    MlNum(int val) : Morpheme(std::to_string(val), Typehints::mlnum) {};
+Token mlNumConclude(TypeGuide& guide);
 
-    static Morpheme infix(int stack, const Morpheme& op, const Morpheme& operand);
+Morpheme mlNamespaceInfix(int stack, const Morpheme& op, const Morpheme& operand);
 
-    static Morpheme infix(int stack, const Morpheme& op);
+Morpheme mlNamespaceInfix(int stack, const Morpheme& op);
 
-    static Token conclude(TypeGuide& guide);
-};
+Token mlNamespaceConConclude(TypeGuide& guide, std::string result, Position pos);
 
-struct MlNamespace : public Morpheme
-{
-    MlNamespace() = default;
+Token mlNamespaceConclude(TypeGuide& guide);
 
-    MlNamespace(std::string val) : Morpheme(val, Typehints::mlnamespace) {};
-
-    static Token resolve(TypeGuide& guide, std::string result, Position pos);
-
-    /**
-      Continues conclusion fron partial result.
-    */
-
-    static Morpheme infix(int stack, const Morpheme& op, const Morpheme& operand);
-
-    static Morpheme infix(int stack, const Morpheme& op);
-
-    static Token conConclude(TypeGuide& guide, std::string result, Position pos);
-
-    static Token conclude(TypeGuide& guide);
-};
-
-struct MlInfix : public Morpheme
-{
-    MlInfix() = default;
-
-    MlInfix(std::string val, short precedence, bool isolate, bool hyphenated=false, bool unary=false, bool binary=true)
-        : Morpheme(val, Typehints::mlinfix, precedence, hyphenated, isolate, unary, binary) {};
-};
 
 struct LexxedResult
 {
@@ -152,7 +112,7 @@ struct LexxedResult
     bool failed;
 
     LexxedResult(std::vector<Token>& tks)
-        : tokens(std::move(tks)), failed(false) {};
+        : tokens(tks), failed(false) {};
 
     LexxedResult(std::unique_ptr<BaseException>& fault)
         : error(std::move(fault)), failed(true) {}
@@ -163,14 +123,14 @@ LexxedResult tokenize();
 
 // (std::string val, short precedence, bool isolate, bool hyphenated = false, bool unary = false, bool binary = true)
 
-const MlInfix g_lexicon_infixes[8] =
-{ {"~", g_lowest_prc, false},
-  {"=", g_lowest_prc, false},
-  {"+", g_lowest_prc, false },
-  {"-", g_lowest_prc, false, true},
-  {"*", g_low_prc, false },
-  {"/", g_low_prc, false},
-  {"...", g_low_prc, false},
-  {"return", g_low_prc, false, true} };
+const Morpheme g_lexicon_infixes[8] =
+{ {"~", Types::mlinfix, g_lowest_prc, false},
+  {"=", Types::mlinfix, g_lowest_prc, false},
+  {"+", Types::mlinfix, g_lowest_prc, false },
+  {"-", Types::mlinfix, g_lowest_prc, false, true},
+  {"*", Types::mlinfix, g_low_prc, false },
+  {"/", Types::mlinfix, g_low_prc, false},
+  {"...", Types::mlinfix, g_low_prc, false},
+  {"return", Types::mlinfix, g_low_prc, false, true} };
 
 
