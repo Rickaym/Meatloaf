@@ -1,15 +1,19 @@
-Copyright (c) 2001-2021 Preheating.
-
 ## Index
 1. **[Abstraction](#meatloaf)**
 2. **[Functionality](#functionality)**
 3. **[Execution](#execution)**
 
-Maintainers: [Ricky](https://github.com/Rickaym) & [Kecky](https://github.com/KekOnTheWorld)
-
 # Abstraction
-In extension to majority of main-stream high level languages, this is an attempt to make high level abstractions to often ignored core backbone language implementation details. Concepts such as **keywords** and **qualifiers** are some of the few barebone level ideas that exists only behind the scene. In most cases, the idea of a user-creatable keyword, type qualifier or an operator is impossible and taboo.. Let's change that.
+In extension to major high level languages, this is an attempt to perform abstractions of barebone level concepts
+into higher domains. Concepts such as **keywords** and **qualifiers** will be exposed to the user arena thus intrinsically 
+implementable in a non ambiguous way.
 
-In analysis, *everything* consisted of source code is but abstract concepts that all boil down to the idea of meaning in  characters a with definable behavior (where behind the scenes an analogue to speaking with the CPU). Meatloaf intends to abstract every fundamental language implementation into a high level arena, user-definable, overridable.. This introduces beautifully the linguistic concepts like *Morphemes*, various types of *Affix*-es instead of traditional *keywords* and *operators*.
+The philosophy behind this implementation is in the idea that *everything* consisted of source code follows an objective
+ruleset of reason and logic, but the orthography, in other words, the way and manner in which 
+we describe a certain string of logic through source text is to be subjectively or collectively notated but not strictly.
 
-In theory, opening up language implementaion onto a higher level opens up syntax immitation, Meatloaf code but in Python syntax as an example. On the surface, it sounds rather useless, but there's something to be said about the capability of understanding different syntax implementation on a high level.
+The logical reasoning and turing completeness of the language has no change. Such an abstraction
+enables alternative semantics, arguably better yet, a mobile collective representation in interpretation of logic. As a matter 
+of fact, the basis of this idea depends enabling that exact evolution.
+
+***TO BE CONTINUED***
