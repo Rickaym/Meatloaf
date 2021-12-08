@@ -20,8 +20,6 @@
 
 struct Operable
 {
-    bool valid;
-
     Morpheme virtual eval() const = 0;
     
     std::string virtual to_string() const = 0;
@@ -33,13 +31,7 @@ struct Node : public Operable
 {
     Token token;
 
-    Node(Token& tk) : token(tk) 
-    {
-        if (!tk.valid) 
-        {
-            this->valid = false;
-        }
-    };
+    Node(Token& tk) : token(tk) {};
 
     Morpheme eval() const override;
 
@@ -53,13 +45,7 @@ struct BiNode : public Operable
     std::unique_ptr<Operable> inferior;
 
     BiNode(std::unique_ptr<Operable>& super, Token& op_token, std::unique_ptr<Operable>& infer)
-        : superior(std::move(super)), op_token(op_token), inferior(std::move(infer))
-    {
-        if (!op_token.valid)
-        {
-            this->valid = false;
-        }
-    };
+        : superior(std::move(super)), op_token(op_token), inferior(std::move(infer)) {};
 
     Morpheme eval() const;
 
