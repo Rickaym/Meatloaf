@@ -53,6 +53,7 @@ void interactive_grill() {
         std::getline(std::cin, cmdlet);
         Source::text = cmdlet;
         Source::uri = "Interactive Grill";
+
         LexxedResult lres = tokenize();
         if (lres.failed == false)
         {
@@ -69,8 +70,7 @@ void interactive_grill() {
             continue;
         }
 
-        Parser p(std::move(lres.tokens));
-        ParsedResult pres = p.ast();
+        ParsedResult pres = ast(lres.tokens);
         if (pres.failed == true)
         {
             std::cout << *(pres.error) << std::endl;

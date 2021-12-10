@@ -20,7 +20,7 @@
 
 struct Operable
 {
-    Lexeme virtual eval() const = 0;
+    Morpheme virtual eval() const = 0;
     
     std::string virtual to_string() const = 0;
 
@@ -33,7 +33,7 @@ struct Node : public Operable
 
     Node(Token& tk) : token(tk) {};
 
-    Lexeme eval() const override;
+    Morpheme eval() const override;
 
     std::string to_string() const override;
 };
@@ -47,7 +47,7 @@ struct BiNode : public Operable
     BiNode(std::unique_ptr<Operable>& super, Token& op_token, std::unique_ptr<Operable>& infer)
         : superior(std::move(super)), op_token(op_token), inferior(std::move(infer)) {};
 
-    Lexeme eval() const;
+    Morpheme eval() const;
 
     std::string to_string() const;
 };  

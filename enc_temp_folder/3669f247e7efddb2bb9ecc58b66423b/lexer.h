@@ -19,32 +19,38 @@ const short g_highest_prc = 3;
 
 const char g_lexicon_delimiters[2] = {' ', ';'};
 
-/**
- * mlnum       : Numeric type, every numeric string of characters
- * mlnamespace : Namespace type, every literal string of characters until it is resolved
- *               into it's real type
- * mlaffix     : Affix type, an exhaustible built-in or user defined type of a literal string of characters
- * mlprefix    : Prefix type, an exhustible built-in or user defined type of an affix that is found pre statement
- * mlinfix     : Infix type, an exhustible built-in or user defined type of an affix that is found in between a statement
- * mlcircumfix : Circumfix type, an exhustible built-in or user defined type of an affix that is found surrounding
- *               the statement at the start and the end
- * mleof       : EOF type, remarks the end of a token stream.
-*/
 enum class MlTypes
 {
     mlnum,
     mlnamespace,
-    mlaffix,
-    mlprefix,
     mlinfix,
+    mlaffix,
     mlcircumfix,
     mleof
 };
 
 std::string get_type_name(const MlTypes& tp);
 
-
-struct Lexeme
+/**
+  A morpheme is the smallest unit of meaning characterized by semantics.
+ 
+  For instance, "1" is a morpheme that represents the number one.
+  Morphemes curate it's own interactions with bound-morphemes.
+  New morphemes are created from combining a given morpheme and
+  "bound" morphemes whereas "bound" morphemes are invalid alone.
+ 
+  In this instance the negative unary operator "-" is a bound
+  morpheme that carries with it extra meaning to our prior morpheme "1".
+  Note that -1 consits of two morphemes, a lexeme.
+  
+  Some affixes are only valid when they are followed by an interfix.
+  I.e. `return 0` cannot be used as `return0` since the interfix character, a whitespace
+  plays a role on it's validation. 
+  This is significant if the affix name is allowed to be used within variable names.
+  The keyword `return` without this configuration of validation would mean that `return0` is looked
+  at as an operation statement rather than a namespace thus restricting any namespaces hinting the affix name
+*/
+struct Morpheme
 {
     std::string characters;
     MlTypes typehint;
@@ -54,9 +60,9 @@ struct Lexeme
     bool unary;
     bool binary;
 
-    bool operator==(Lexeme &other);
+    bool operator==(Morpheme &other);
 
-    bool operator!=(Lexeme &other);
+    bool operator!=(Morpheme &other);
 };
 
 /**
@@ -65,7 +71,7 @@ struct Lexeme
 */
 struct Token
 {
-    Lexeme lexeme;
+    Morpheme morpheme;
     Position position;
     bool valid;
 
@@ -74,8 +80,8 @@ struct Token
     Token(Position position)
         : position(position), valid(false) {};
 
-    Token(Lexeme means, Position pos)
-        : lexeme(means), position(pos), valid(true) {};
+    Token(Morpheme means, Position pos)
+        : morpheme(means), position(pos), valid(true) {};
 
     bool operator==(Token& other);
 
@@ -86,15 +92,15 @@ struct Token
     friend std::ostream& operator<<(std::ostream& os, const Token& n);
 };
 
-Lexeme mlNumInfix(int stack, const Lexeme& op, const Lexeme& operand);
+Morpheme mlNumInfix(int stack, const Morpheme& op, const Morpheme& operand);
 
-Lexeme mlNumInfix(int stack, const Lexeme& op);
+Morpheme mlNumInfix(int stack, const Morpheme& op);
 
 Token mlNumConclude(TypeGuide& guide);
 
-Lexeme mlNamespaceInfix(int stack, const Lexeme& op, const Lexeme& operand);
+Morpheme mlNamespaceInfix(int stack, const Morpheme& op, const Morpheme& operand);
 
-Lexeme mlNamespaceInfix(int stack, const Lexeme& op);
+Morpheme mlNamespaceInfix(int stack, const Morpheme& op);
 
 Token mlNamespaceConConclude(TypeGuide& guide, std::string result, Position pos);
 
@@ -117,15 +123,25 @@ struct LexxedResult
 
 LexxedResult tokenize();
 
-const Lexeme g_lexicon_affixes[12] =
+/*
+    std::string characters;
+    MlTypes typehint;
+    short precedence;
+    bool hyphenated;
+    bool isolated;
+    bool unary;
+    bool binary;
+  */
+
+const Morpheme g_lexicon_affixes[12] =
 { {"~", MlTypes::mlinfix, g_lowest_prc, false},
   {"=", MlTypes::mlinfix, g_lowest_prc, false},
   {"+", MlTypes::mlinfix, g_lowest_prc, false},
   {"-", MlTypes::mlinfix, g_lowest_prc, false},
   {"*", MlTypes::mlinfix, g_low_prc, false },
   {"/", MlTypes::mlinfix, g_low_prc, false},
-  {"...", MlTypes::mlaffix, g_low_prc, false},
-  {"return", MlTypes::mlprefix, g_low_prc, false, true},
+  {"...", MlTypes::mlinfix, g_low_prc, false},
+  {"return", MlTypes::mlinfix, g_low_prc, false, true},
   {"{", MlTypes::mlcircumfix, g_lowest_prc},
   {"}", MlTypes::mlcircumfix, g_lowest_prc},
   {"(", MlTypes::mlcircumfix, g_lowest_prc},

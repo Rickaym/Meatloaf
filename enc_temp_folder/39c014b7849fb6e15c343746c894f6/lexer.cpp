@@ -32,7 +32,7 @@ std::string get_type_name(const MlTypes& tp)
 
 bool Token::operator==(Token &other) 
 {
-    return this->valid && other.valid && this->lexeme == other.lexeme;
+    return this->valid && other.valid && this->morpheme == other.morpheme;
 };
 
 bool Token::operator!=(Token &other) 
@@ -49,17 +49,17 @@ std::ostream& operator<<(std::ostream& os, const Token& n)
 std::string Token::to_string() const 
 {
     if (this->valid == true)
-        return get_type_name(this->lexeme.typehint) + "(" + this->lexeme.characters + ")";
+        return get_type_name(this->morpheme.typehint) + "(" + this->morpheme.characters + ")";
     else
         return "[" + this->position.to_string() + "]";
 };
 
-bool Lexeme::operator==(Lexeme &other)
+bool Morpheme::operator==(Morpheme &other)
 {
     return this->characters == other.characters && this->typehint == other.typehint;
 };
 
-bool Lexeme::operator!=(Lexeme &other)
+bool Morpheme::operator!=(Morpheme &other)
 {
     return !this->operator==(other);
 };
@@ -76,9 +76,10 @@ Token mlNumConclude(TypeGuide &guide)
         if (guide.chr == '.')
         {
             if (dotCount == 0)
-                dotCount++;
-            else 
             {
+                dotCount++;
+            }
+            else {
                 pos.end = guide.pos + 1;
                 return Token(pos);
             }
@@ -87,16 +88,16 @@ Token mlNumConclude(TypeGuide &guide)
         guide.advance();
     };
     pos.end = guide.pos;
-    return Token(Lexeme{ result, MlTypes::mlnum }, pos);
+    return Token(Morpheme{ result, MlTypes::mlnum }, pos);
 };
 
 /**
  * An optimized search of a single character with the criteria being
  * if they are predefined.
 */
-const Lexeme* is_defined_affix(std::string chr)
+const Morpheme* is_defined_affix(std::string chr)
 {
-    auto isEquals = [chr](Lexeme m)
+    auto isEquals = [chr](Morpheme m)
     {
         return m.characters == chr;
     };
@@ -114,7 +115,7 @@ Token mlNamespaceResolve(TypeGuide& guide, std::string result, Position pos)
         guide.advance();
     };
     pos.end = guide.pos;
-    return Token(Lexeme{ result, MlTypes::mlnamespace }, pos);
+    return Token(Morpheme{ result, MlTypes::mlnamespace }, pos);
 }
 
 /**
@@ -143,18 +144,14 @@ Token mlResolve(TypeGuide &guide)
     std::string chr(1, guide.chr);
     Position capture = guide.capture();
     guide.advance();
-    const Lexeme* res = is_defined_affix(chr);
+    const Morpheme* res = is_defined_affix(chr);
     
-    if (res != std::end(g_lexicon_affixes) && 
-        !(res->isolated == true && 
-            (guide.is_delimiter() == false && guide.eof == false)
-         )) 
-    {
-        capture.end = guide.pos;
-        return Token(*res, capture);
-    }
+    if (res != std::end(g_lexicon_affixes) && !(res->isolated == true && (guide.is_delimiter() == false && guide.eof == false))) {
+            capture.end = guide.pos;
+            return Token(*res, capture);
+        }
 
-    auto startswith = [chr](Lexeme m)
+    auto startswith = [chr](Morpheme m)
     {
         return (int)m.characters.rfind(chr) != -1;
     };
@@ -174,7 +171,7 @@ Token mlResolve(TypeGuide &guide)
        If concluded to be true, they still have to abide by the isolation rules and so on */
     if (res != std::end(g_lexicon_affixes) && !(res->isolated == true && (guide.is_delimiter() == false && guide.eof == false)))
     {
-        Lexeme mph = *res;
+        Morpheme mph = *res;
         return Token(mph, capture);
     }
     else
