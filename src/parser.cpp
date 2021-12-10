@@ -55,7 +55,6 @@ void Parser::retreat()
 
 Lexeme Node::eval() const 
 {
-    // return this->token.morpheme;
     return Lexeme();
 }
 
@@ -66,7 +65,6 @@ std::string Node::to_string() const
 
 Lexeme BiNode::eval() const 
 {
-    //return this->superior->eval().infix(this->op_node.token.morpheme, inferior->eval(), 0);
     return Lexeme();
 };
 

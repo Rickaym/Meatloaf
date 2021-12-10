@@ -39,9 +39,7 @@ std::ostream& operator<<(std::ostream& os, const Operable& n)
 void Parser::advance()
 {
     if (this->index < (this->tokens.size()-1))
-    {
         this->index++;
-    }
 };
 
 Token Parser::cur_token()
@@ -52,31 +50,29 @@ Token Parser::cur_token()
 void Parser::retreat()
 {   
     if (this->index > 0)
-    {
         this->index--;
-    }
 };
 
-Morpheme Node::eval() const 
+Lexeme Node::eval() const 
 {
     // return this->token.morpheme;
-    return Morpheme();
+    return Lexeme();
 }
 
 std::string Node::to_string() const
 {
-    return this->token.morpheme.characters;
+    return this->token.lexeme.characters;
 };
 
-Morpheme BiNode::eval() const 
+Lexeme BiNode::eval() const 
 {
     //return this->superior->eval().infix(this->op_node.token.morpheme, inferior->eval(), 0);
-    return Morpheme();
+    return Lexeme();
 };
 
 std::string BiNode::to_string() const 
 {
-    return "$(" + this->superior->to_string() + ' ' + this->op_token.morpheme.characters + ' ' + this->inferior->to_string() + ")$";
+    return "($" + this->superior->to_string() + ' ' + this->op_token.lexeme.characters + ' ' + this->inferior->to_string() + "$)";
 };
 
 
@@ -99,7 +95,7 @@ void Parser::deduce_statement(int&& prc, Task& tsk)
     {
         // circmfixes are deduced directly as the statement that it is surrounding, therefore 
         // they must be stepped over, with no signifcance but in precedence overriding
-        if (this->cur_token().morpheme.typehint == MlTypes::mlcircumfix) 
+        if (this->cur_token().lexeme.typehint == MlTypes::mlcircumfix) 
         {
             this->advance();
             this->deduce_statement(0, tsk);
@@ -111,22 +107,18 @@ void Parser::deduce_statement(int&& prc, Task& tsk)
     };
     this->deduce_statement(prc + 1, tsk);
     if (tsk.failed == true)
-    {
         return;
-    }
     std::unique_ptr<Operable> superior = std::move(tsk.value);
     this->advance();
     Token op = this->cur_token();
-    while (op.valid == true && op.morpheme.precedence == prc && op.morpheme.typehint != MlTypes::mlcircumfix)
+    while (op.valid == true && op.lexeme.precedence == prc && op.lexeme.typehint != MlTypes::mlcircumfix)
     {
         this->advance();
         // deduced a new statement as for the inferior part
         // of the binary node
         this->deduce_statement(prc + 1, tsk);
         if (tsk.failed == true)
-        {
             return;
-        }
 
         superior = std::make_unique<BiNode>(superior, op, tsk.value);
         this->advance();
