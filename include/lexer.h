@@ -43,7 +43,16 @@ enum class MlTypes
 
 std::string get_type_name(const MlTypes& tp);
 
-
+/**
+ * characters : the string representation of the lexeme
+ * typehint   : the type representation of the lexeme in an enum value
+ * precedence : the precedence of the lexeme compartively to other lexemes
+ * hyphenated : whether if this lexeme needs a hyphen to be valid
+ * isolated   : whether if the lexeme needs to be surrounded by delimiters thus isolated
+ *              to be considered valid
+ * unary      : whether if the lexeme responds to unary calls to be an operator
+ * binary     : whether if the lexeme responds to binary calls to be an operator
+*/
 struct Lexeme
 {
     std::string characters;
@@ -117,16 +126,24 @@ struct LexxedResult
 
 LexxedResult tokenize();
 
+/* std::string characters;
+   MlTypes typehint;
+   short precedence;
+   bool hyphenated;
+   bool isolated;
+   bool unary;
+   bool binary; */
+
 const Lexeme g_lexicon_affixes[12] =
-{ {"~", MlTypes::mlinfix, g_lowest_prc, false},
-  {"=", MlTypes::mlinfix, g_lowest_prc, false},
-  {"+", MlTypes::mlinfix, g_lowest_prc, false},
-  {"-", MlTypes::mlinfix, g_lowest_prc, false},
-  {"*", MlTypes::mlinfix, g_low_prc, false },
-  {"/", MlTypes::mlinfix, g_low_prc, false},
-  {"...", MlTypes::mlaffix, g_low_prc, false},
-  {"return", MlTypes::mlprefix, g_low_prc, false, true},
-  {"{", MlTypes::mlcircumfix, g_lowest_prc},
-  {"}", MlTypes::mlcircumfix, g_lowest_prc},
-  {"(", MlTypes::mlcircumfix, g_lowest_prc},
-  {")", MlTypes::mlcircumfix, g_lowest_prc} };
+{ {"~", MlTypes::mlinfix, g_lowest_prc, false, false, true, false},
+  {"=", MlTypes::mlinfix, g_lowest_prc, false, false, false, true},
+  {"+", MlTypes::mlinfix, g_lowest_prc, false, false, false, true},
+  {"-", MlTypes::mlinfix, g_lowest_prc, false, false, true, true},
+  {"*", MlTypes::mlinfix, g_low_prc, false, false, false, true},
+  {"/", MlTypes::mlinfix, g_low_prc, false, false, false, true},
+  {"...", MlTypes::mlaffix, g_low_prc, false, false, false, false},
+  {"return", MlTypes::mlprefix, g_low_prc, false, true, true, false},
+  {"{", MlTypes::mlcircumfix, g_lowest_prc, false, false, false, false},
+  {"}", MlTypes::mlcircumfix, g_lowest_prc, false, false, false, false},
+  {"(", MlTypes::mlcircumfix, g_lowest_prc, false, false, false, false},
+  {")", MlTypes::mlcircumfix, g_lowest_prc, false, false, false, false} };

@@ -6,9 +6,8 @@
 
 std::string BaseException::traceback() const
 {
-	// we need the starting index of the line to display the full line
+	// true line start
 	int lnStart = this->position_.start - (this->position_.column - 1);
-	// reveals the amount of correct tokens before error actually starts
 	int errStart = this->position_.start - lnStart;
 	
 	std::string gutter = std::to_string(this->position_.line) + " | ";

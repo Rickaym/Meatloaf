@@ -53,24 +53,19 @@ void Parser::retreat()
         this->index--;
 };
 
-Lexeme Node::eval() const 
-{
-    return Lexeme();
-}
-
 std::string Node::to_string() const
 {
     return this->token.lexeme.characters;
 };
 
-Lexeme BiNode::eval() const 
-{
-    return Lexeme();
-};
-
 std::string BiNode::to_string() const 
 {
     return "$(" + this->superior->to_string() + ' ' + this->op_token.lexeme.characters + ' ' + this->inferior->to_string() + ")$";
+};
+
+std::string UnNode::to_string() const
+{
+    return "$|" + this->op_token.lexeme.characters + this->operand->to_string() + "|$";
 };
 
 
@@ -79,7 +74,7 @@ ParsedResult ast(std::vector<Token>& tks)
     std::vector<std::unique_ptr<Operable>> nodes;
     Task tsk;
     Parser p{ tks };
-    p.deduce_statement(0, tsk);
+    p.deduce_statement(-1, tsk);
     if (tsk.failed == true)
         return ParsedResult(tsk.error);
     else
@@ -91,39 +86,50 @@ void Parser::deduce_statement(int&& prc, Task& tsk)
 {
     if (prc == (g_highest_prc + 1))
     {
-        // circmfixes are deduced directly as the statement that it is surrounding, therefore 
-        // they must be stepped over, with no signifcance but in precedence overriding
+        // circumfixes are deduced directly as the statement that it is surrounding, therefore 
+        // they must be stepped over, with no significance but in precedence overriding
         if (this->cur_token().lexeme.typehint == MlTypes::mlcircumfix) 
         {
             this->advance();
             this->deduce_statement(0, tsk);
             this->advance();
         }
+        else if (this->cur_token().lexeme.unary == true)
+        {
+            Token op = this->cur_token();
+            this->advance();
+            this->deduce_statement(0, tsk);
+            tsk.success(std::make_unique<UnNode>(op, tsk.value));
+        }
         else 
             tsk.success(std::make_unique<Node>(this->cur_token()));
         return;
     };
     this->deduce_statement(prc + 1, tsk);
-    if (tsk.failed == true)
+    if (tsk.failed)
         return;
     std::unique_ptr<Operable> superior = std::move(tsk.value);
     this->advance();
     Token op = this->cur_token();
-    while (op.valid == true && op.lexeme.precedence == prc && op.lexeme.typehint != MlTypes::mlcircumfix)
+    while (op.valid && op.lexeme.precedence == prc && op.lexeme.binary)
     {
         this->advance();
-        // deduced a new statement as for the inferior part
-        // of the binary node
+        if (this->cur_token().lexeme.typehint == MlTypes::mleof)
+            return tsk.failure(std::make_unique<SyntaxError>(op.position, "Unexpected EOF while parsing"));
         this->deduce_statement(prc + 1, tsk);
-        if (tsk.failed == true)
+        if (tsk.failed)
             return;
-
         superior = std::make_unique<BiNode>(superior, op, tsk.value);
+
         this->advance();
         op = this->cur_token();
     };
-    // to compensate an imminent overstep
+    // having not reached the end of tokens in the end of
+    // the initiation call is indicative of an invalid syntax
+    if (prc == -1 && this->index != this->tokens.size()-1)
+        return tsk.failure(std::make_unique<SyntaxError>(op.position));
+
+    // compensate an imminent overstep in parsing
     this->retreat();
-    tsk.success(superior);
-    return;
+    return tsk.success(superior);
 };

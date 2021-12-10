@@ -33,7 +33,19 @@ struct Node : public Operable
 
     Node(Token& tk) : token(tk) {};
 
-    Lexeme eval() const override;
+    Lexeme eval() const override { return Lexeme(); };
+
+    std::string to_string() const override;
+};
+
+struct UnNode : public Operable
+{
+    Token op_token;
+    std::unique_ptr<Operable> operand;
+
+    UnNode(Token& op, std::unique_ptr<Operable>& opnd) : op_token(op), operand(std::move(opnd)) {};
+
+    Lexeme eval() const override { return Lexeme();  };
 
     std::string to_string() const override;
 };
@@ -47,7 +59,7 @@ struct BiNode : public Operable
     BiNode(std::unique_ptr<Operable>& super, Token& op_token, std::unique_ptr<Operable>& infer)
         : superior(std::move(super)), op_token(op_token), inferior(std::move(infer)) {};
 
-    Lexeme eval() const;
+    Lexeme eval() const { return Lexeme(); };
 
     std::string to_string() const;
 };  

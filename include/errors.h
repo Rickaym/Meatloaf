@@ -13,7 +13,7 @@ struct BaseException
 {
 	BaseException() = default;
 
-	BaseException(std::string brf, Position pos) : brief_(brf), position_(pos) {};
+	BaseException(std::string brf, Position& pos) : brief_(brf), position_(pos) {};
 
 	std::string traceback() const;
 
@@ -27,7 +27,8 @@ private:
 
 struct SyntaxError : public BaseException
 {
-	SyntaxError(Position pos) : BaseException("SyntaxError: Unexpected character or token found", pos) {};
+	SyntaxError(Position& pos, std::string brief="Unexpected character or token found") 
+		: BaseException("SyntaxError: "+brief, pos) {};
 };
 
 

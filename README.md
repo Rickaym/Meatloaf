@@ -1,7 +1,6 @@
 ## Index
 1. **[Abstraction](#meatloaf)**
 2. **[Functionality](#functionality)**
-3. **[Execution](#execution)**
 
 # Abstraction
 In extension to major high level languages, this is an attempt to perform abstractions of barebone level concepts
@@ -16,4 +15,8 @@ The logical reasoning and turing completeness of the language has no change. Suc
 enables alternative semantics, arguably better yet, a mobile collective representation in interpretation of logic. As a matter 
 of fact, the basis of this idea depends enabling that exact evolution.
 
-***TO BE CONTINUED***
+# Functionality
+
+[+] Lexer
+[+] Parser
+	[+] Unary, Binary

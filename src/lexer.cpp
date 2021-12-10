@@ -232,6 +232,6 @@ LexxedResult tokenize()
         endpos = tk.position;
     };
     // an EOF push_back
-    tokens.push_back(Token(endpos));
+    tokens.push_back(Token(Lexeme {"", MlTypes::mleof}, endpos));
     return LexxedResult(tokens);
 };
