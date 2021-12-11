@@ -6,8 +6,9 @@
 #include <iostream>
 #include <cstddef>
 
-#include "errors.h"
-#include "guide.h"
+#include "errors.hpp"
+#include "guide.hpp"
+#include "types.hpp"
 
 /**
  Precedence (prc) constants.
@@ -38,6 +39,7 @@ enum class MlTypes
     mlprefix,
     mlinfix,
     mlcircumfix,
+    mlunknown,
     mleof
 };
 
@@ -56,12 +58,12 @@ std::string get_type_name(const MlTypes& tp);
 struct Lexeme
 {
     std::string characters;
-    MlTypes typehint;
-    short precedence;
-    bool hyphenated;
-    bool isolated;
-    bool unary;
-    bool binary;
+    MlTypes typehint = MlTypes::mlunknown;
+    short precedence = g_lowest_prc;
+    bool hyphenated = false;
+    bool isolated = false;
+    bool unary = false;
+    bool binary = false;
 
     bool operator==(Lexeme &other);
 
@@ -95,15 +97,7 @@ struct Token
     friend std::ostream& operator<<(std::ostream& os, const Token& n);
 };
 
-Lexeme mlNumInfix(int stack, const Lexeme& op, const Lexeme& operand);
-
-Lexeme mlNumInfix(int stack, const Lexeme& op);
-
 Token mlNumConclude(TypeGuide& guide);
-
-Lexeme mlNamespaceInfix(int stack, const Lexeme& op, const Lexeme& operand);
-
-Lexeme mlNamespaceInfix(int stack, const Lexeme& op);
 
 Token mlNamespaceConConclude(TypeGuide& guide, std::string result, Position pos);
 
@@ -134,15 +128,24 @@ LexxedResult tokenize();
    bool unary;
    bool binary; */
 
-const Lexeme g_lexicon_affixes[12] =
-{ {"~", MlTypes::mlinfix, g_lowest_prc, false, false, true, false},
+const Lexeme g_lexicon_affixes[21] =
+{ {"...", MlTypes::mlaffix, g_low_prc, false, false, false, false},
+  {"\"", MlTypes::mlaffix, g_low_prc, false, false, false, false},
+  {"~", MlTypes::mlprefix, g_lowest_prc, false, false, true, false},
+  {"return", MlTypes::mlprefix, g_low_prc, false, true, true, false},
+  {"str", MlTypes::mlprefix, g_low_prc, false, true, true, false},
+  {"mstr", MlTypes::mlaffix, g_low_prc, false, true, true, false},
+  {"int", MlTypes::mlprefix, g_low_prc, false, true, true, false},
+  {"float", MlTypes::mlprefix, g_low_prc, false, true, true, false},
+  {":", MlTypes::mlinfix, g_lowest_prc, false, false, false, true},
+  {"if", MlTypes::mlprefix, g_low_prc, false, true, true, false},
+  {",", MlTypes::mlinfix, g_lowest_prc, false, false, false, true},
   {"=", MlTypes::mlinfix, g_lowest_prc, false, false, false, true},
   {"+", MlTypes::mlinfix, g_lowest_prc, false, false, false, true},
+  {".", MlTypes::mlinfix, g_lowest_prc, false, false, false, true},
   {"-", MlTypes::mlinfix, g_lowest_prc, false, false, true, true},
   {"*", MlTypes::mlinfix, g_low_prc, false, false, false, true},
   {"/", MlTypes::mlinfix, g_low_prc, false, false, false, true},
-  {"...", MlTypes::mlaffix, g_low_prc, false, false, false, false},
-  {"return", MlTypes::mlprefix, g_low_prc, false, true, true, false},
   {"{", MlTypes::mlcircumfix, g_lowest_prc, false, false, false, false},
   {"}", MlTypes::mlcircumfix, g_lowest_prc, false, false, false, false},
   {"(", MlTypes::mlcircumfix, g_lowest_prc, false, false, false, false},

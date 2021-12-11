@@ -37,7 +37,7 @@ struct Position;
 struct Source
 {
     static std::string text;
-    static std::string uri;
+    static std::string file;
 };
 
 /**

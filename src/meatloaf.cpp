@@ -4,9 +4,9 @@
 #include <memory>
 #include <string>
 
-#include "lexer.h"
-#include "parser.h"
-#include "git.h"
+#include "lexer.hpp"
+#include "parser.hpp"
+#include "git.hpp"
 
 #define ML_VERSION "0.0.0.b"
 
@@ -52,15 +52,14 @@ void interactive_grill() {
         std::cout << "->- ";
         std::getline(std::cin, cmdlet);
         Source::text = cmdlet;
-        Source::uri = "Interactive Grill";
+        Source::file = "<stdin>";
 
         LexxedResult lres = tokenize();
         if (lres.failed == false)
         {
-            std::cout << "... ";
             for (Token const& tk : lres.tokens)
             {
-                std::cout << tk << ' ';
+                std::cout << tk;
             };
             std::cout << "\n";
         }
@@ -78,6 +77,10 @@ void interactive_grill() {
         else
         {
             std::cout << *(pres.nodes[0]) << std::endl;
+        }
+        for (std::unique_ptr<Operable>& nd : pres.nodes)
+        {
+            std::cout << nd->eval()->repr();
         }
     }
 }

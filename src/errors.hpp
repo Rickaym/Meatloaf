@@ -3,7 +3,7 @@
 #include <string>
 #include <sstream>
 
-#include "guide.h"
+#include "guide.hpp"
 
 /**
   ---------- Errors ------------
@@ -27,7 +27,7 @@ private:
 
 struct SyntaxError : public BaseException
 {
-	SyntaxError(Position& pos, std::string brief="Unexpected character or token found") 
+	SyntaxError(Position& pos, std::string brief="Unexpected proceeding character or token") 
 		: BaseException("SyntaxError: "+brief, pos) {};
 };
 

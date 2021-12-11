@@ -4,8 +4,8 @@
 #include <memory>
 #include <ostream>
 
-#include "lexer.h"
-#include "errors.h"
+#include "lexer.hpp"
+#include "errors.hpp"
 
 /**
   A lexeme a singular or a combination of morphemes, lexemes that look-a-like does not change
@@ -20,7 +20,7 @@
 
 struct Operable
 {
-    Lexeme virtual eval() const = 0;
+    std::unique_ptr<MlObject> virtual eval() const = 0;
     
     std::string virtual to_string() const = 0;
 
@@ -33,7 +33,7 @@ struct Node : public Operable
 
     Node(Token& tk) : token(tk) {};
 
-    Lexeme eval() const override { return Lexeme(); };
+    std::unique_ptr<MlObject> eval() const override;
 
     std::string to_string() const override;
 };
@@ -45,7 +45,7 @@ struct UnNode : public Operable
 
     UnNode(Token& op, std::unique_ptr<Operable>& opnd) : op_token(op), operand(std::move(opnd)) {};
 
-    Lexeme eval() const override { return Lexeme();  };
+    std::unique_ptr<MlObject> eval() const override;
 
     std::string to_string() const override;
 };
@@ -59,9 +59,9 @@ struct BiNode : public Operable
     BiNode(std::unique_ptr<Operable>& super, Token& op_token, std::unique_ptr<Operable>& infer)
         : superior(std::move(super)), op_token(op_token), inferior(std::move(infer)) {};
 
-    Lexeme eval() const { return Lexeme(); };
+    std::unique_ptr<MlObject> eval() const override;
 
-    std::string to_string() const;
+    std::string to_string() const override;
 };  
 
 struct Task

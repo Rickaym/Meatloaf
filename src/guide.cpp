@@ -1,10 +1,10 @@
 #include <string>
 
-#include "lexer.h"
-#include "guide.h"
+#include "lexer.hpp"
+#include "guide.hpp"
 
 std::string Source::text;
-std::string Source::uri;
+std::string Source::file;
 
 void TypeGuide::advance()
 {

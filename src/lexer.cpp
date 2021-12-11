@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <vector>
 #include <algorithm>
 #include <string>
@@ -6,27 +5,30 @@
 #include <sstream>
 #include <memory>
 
-#include "lexer.h"
-#include "errors.h"
+#include "lexer.hpp"
+#include "types.hpp"
+#include "errors.hpp"
 
 std::string get_type_name(const MlTypes& tp)
 {
     switch (tp)
     {
     case MlTypes::mlnum:
-        return "num";
+        return "NUM";
     case MlTypes::mlnamespace:
-        return "namespace";
-    case MlTypes::mlinfix:
-        return "infix";
+        return "NAME";
     case MlTypes::mlaffix:
-        return "affix";
-    case MlTypes::mleof:
-        return "eof";
+        return "AFFIX";
+    case MlTypes::mlprefix:
+        return "PREFIX";
+    case MlTypes::mlinfix:
+        return "INFIX";
     case MlTypes::mlcircumfix:
-        return "circumfix";
+        return "CIRCUMFIx";
+    case MlTypes::mleof:
+        return "EOF";
     default:
-        return "unknown";
+        return "UNK";
     }
 };
 
@@ -49,7 +51,10 @@ std::ostream& operator<<(std::ostream& os, const Token& n)
 std::string Token::to_string() const 
 {
     if (this->valid == true)
-        return get_type_name(this->lexeme.typehint) + "(" + this->lexeme.characters + ")";
+    {
+        std::string tp = get_type_name(this->lexeme.typehint);
+        return "... " + tp + std::string(10-tp.size(), ' ') + this->lexeme.characters + '\n';
+    }
     else
         return "[" + this->position.to_string() + "]";
 };
@@ -63,6 +68,8 @@ bool Lexeme::operator!=(Lexeme &other)
 {
     return !this->operator==(other);
 };
+
+
 
 Token mlNumConclude(TypeGuide &guide)
 {

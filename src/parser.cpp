@@ -2,8 +2,9 @@
 #include <iostream>
 #include <memory>
 
-#include "lexer.h"
-#include "parser.h"
+#include "lexer.hpp"
+#include "parser.hpp"
+#include "types.hpp"
 
 
 void Task::success(std::unique_ptr<Operable>&& val)
@@ -63,9 +64,32 @@ std::string BiNode::to_string() const
     return "$(" + this->superior->to_string() + ' ' + this->op_token.lexeme.characters + ' ' + this->inferior->to_string() + ")$";
 };
 
+std::unique_ptr<MlObject> Node::eval() const
+{
+    switch (this->token.lexeme.typehint)
+    {
+    case(MlTypes::mlnum):
+        return std::make_unique<MlInt>(this->token.lexeme.characters);
+    }
+    return nullptr;
+}
+
+std::unique_ptr<MlObject> BiNode::eval() const
+{
+    std::unique_ptr<MlObject> sup = std::move(this->superior->eval());
+    std::unique_ptr<MlObject> inf = std::move(this->inferior->eval());
+    sup->operate(inf, this->op_token);
+}
+
+std::unique_ptr<MlObject> UnNode::eval() const
+{
+    std::unique_ptr<MlObject> oprd = std::move(this->operand->eval());
+    oprd->operate(this->op_token);
+}
+
 std::string UnNode::to_string() const
 {
-    return "$|" + this->op_token.lexeme.characters + this->operand->to_string() + "|$";
+    return "$|" + this->op_token.lexeme.characters + ' ' + this->operand->to_string() + "|$";
 };
 
 
@@ -97,8 +121,15 @@ void Parser::deduce_statement(int&& prc, Task& tsk)
         else if (this->cur_token().lexeme.unary == true)
         {
             Token op = this->cur_token();
+            /* prefixes only consumes a single proceeding operand whereas 
+               any non-prefix affixes that responds to unary calls consume
+               the entire following statement */
             this->advance();
-            this->deduce_statement(0, tsk);
+            if (op.lexeme.typehint == MlTypes::mlprefix)
+                tsk.success(std::make_unique<Node>(this->cur_token()));
+            else
+                this->deduce_statement(0, tsk);
+
             tsk.success(std::make_unique<UnNode>(op, tsk.value));
         }
         else 
