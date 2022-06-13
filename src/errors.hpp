@@ -26,7 +26,12 @@ private:
 
 
 struct SyntaxError : public BaseException
+
 {
+	static inline std::unique_ptr<SyntaxError> unique_ptr(Position& pos, std::string brief = "Unexpected proceeding character or token") {
+		return std::make_unique<SyntaxError>(pos, brief);
+	}
+
 	SyntaxError(Position& pos, std::string brief="Unexpected proceeding character or token") 
 		: BaseException("SyntaxError: "+brief, pos) {};
 };

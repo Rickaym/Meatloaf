@@ -11,6 +11,11 @@
 #define ML_VERSION "0.0.0.b"
 
 /**
+ TODO: Type casting - aka figuring out a way to override the MlObject::operate method that takes in MlObject as the operand but 
+        sometimes specific types are needed
+*/
+
+/**
  Hardcoded cooked beef logo.
 */
 void print_logo()
@@ -69,24 +74,23 @@ void interactive_grill() {
             continue;
         }
 
-        ParsedResult pres = ast(lres.tokens);
-        if (pres.failed == true)
+        ParsedResult result = ast(lres.tokens);
+        if (result.failed == true)
         {
-            std::cout << *(pres.error) << std::endl;
+            std::cout << *(result.error);
         }
-        else
+
+        for (std::unique_ptr<Operable>& nd : result.nodes)
         {
-            std::cout << *(pres.nodes[0]) << std::endl;
+            std::shared_ptr<MlObject>& obj = nd->eval();
+            std::cout << obj->repr();
         }
-        for (std::unique_ptr<Operable>& nd : pres.nodes)
-        {
-            std::cout << nd->eval()->repr();
-        }
+        std::cout << std::endl;
     }
 }
 
 int main(int argc, char* argv[]) {
-    print_logo();
+    // print_logo();
 
     if(argc==1) {
         interactive_grill();

@@ -6,21 +6,21 @@
 
 #include "lexer.hpp"
 #include "errors.hpp"
+#include "types.hpp"
 
 /**
-  A lexeme a singular or a combination of morphemes, lexemes that look-a-like does not change
-  meaning.
+ A lexeme a singular or a combination of morphemes, lexemes that look-a-like does not change
+ meaning. 
+ For instance -1  is a lexeme that represents a negative number one.
+ 1+2 is a lexeme that represents a positive number one being added to a positive number 2.
  
-  For instance -1  is a lexeme that represents a negative number one.
-  1+2 is a lexeme that represents a positive number one being added to a positive number 2.
- 
-  1 alone can also be a lexeme in some situations. All lexemes has (or are) morphemes but not all
-  morphemes can be lexemes.
+ 1 alone can also be a lexeme in some situations. All lexemes has (or are) morphemes but not all
+ morphemes can be lexemes.
 */
 
 struct Operable
 {
-    std::unique_ptr<MlObject> virtual eval() const = 0;
+    std::shared_ptr<MlObject> virtual eval() const = 0;
     
     std::string virtual to_string() const = 0;
 
@@ -29,29 +29,41 @@ struct Operable
 
 struct Node : public Operable
 {
+    static inline std::unique_ptr<Node> unique_ptr(Token& tk) {
+        return std::make_unique<Node>(tk);
+    }
+
     Token token;
 
     Node(Token& tk) : token(tk) {};
 
-    std::unique_ptr<MlObject> eval() const override;
+    std::shared_ptr<MlObject> eval() const override;
 
     std::string to_string() const override;
 };
 
 struct UnNode : public Operable
 {
+    static inline std::unique_ptr<UnNode> unique_ptr(Token& op, std::unique_ptr<Operable>& opnd) {
+        return std::make_unique<UnNode>(op, opnd);
+    }
+
     Token op_token;
     std::unique_ptr<Operable> operand;
 
     UnNode(Token& op, std::unique_ptr<Operable>& opnd) : op_token(op), operand(std::move(opnd)) {};
 
-    std::unique_ptr<MlObject> eval() const override;
+    std::shared_ptr<MlObject> eval() const override;
 
     std::string to_string() const override;
 };
 
 struct BiNode : public Operable
 {
+    static inline std::unique_ptr<BiNode> unique_ptr(std::unique_ptr<Operable>& super, Token& op_token, std::unique_ptr<Operable>& infer) {
+        return std::make_unique<BiNode>(super, op_token, infer);
+    }
+
     std::unique_ptr<Operable> superior;
     Token op_token;
     std::unique_ptr<Operable> inferior;
@@ -59,12 +71,12 @@ struct BiNode : public Operable
     BiNode(std::unique_ptr<Operable>& super, Token& op_token, std::unique_ptr<Operable>& infer)
         : superior(std::move(super)), op_token(op_token), inferior(std::move(infer)) {};
 
-    std::unique_ptr<MlObject> eval() const override;
+    std::shared_ptr<MlObject> eval() const override;
 
     std::string to_string() const override;
 };  
 
-struct Task
+struct Status
 {
     bool failed = false;
     std::unique_ptr<Operable> value;
@@ -104,7 +116,7 @@ struct Parser
 
     void retreat();
 
-    void deduce_statement(int&& prc, Task& tsk);
+    void deduce_statement(int&& prc, Status& tsk);
 };
 
 ParsedResult ast(std::vector<Token>& tks);

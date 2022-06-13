@@ -21,18 +21,18 @@
 #endif
 
 /**
-  ---------- Guide ------------
-  Includes complimentary structs for the parser and the lexer that is also
-  required by other components. Escapes dependency conflicts.
+ ---------- Guide ------------
+ Includes complimentary structs for the parser and the lexer that is also
+ required by other components. Escapes dependency conflicts.
 */
 
 
-/* fwds */
+// fwds
 
 struct Position;
 
 /**
-  Source object shared by the different parts of the compiler.
+ Source object shared by the different parts of the compiler.
 */
 struct Source
 {
@@ -71,7 +71,7 @@ private:
 };
 
 /**
-  A description of the position a morpheme has in the source code.
+ A description of the position a morpheme has in the source code.
 */
 struct Position
 {
