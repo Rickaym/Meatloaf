@@ -15,9 +15,9 @@ std::string BaseException::traceback() const
 	int othrAmt = errStart - lnStart;
 
 	std::string gutter = std::to_string(this->position_.line) + " | ";
-	
+	size_t end = Source::text.find_first_of("\n", lnStart);
 	return "Exception in " + Source::file + ":\n" +
-		gutter + Source::text.substr(lnStart, this->position_.end) + '\n' +
+		gutter + Source::text.substr(lnStart, end) + '\n' +
 		std::string(gutter.size(), ' ') + std::string(othrAmt, '~') +
 		std::string(errAmt, '^') + '\n' +
 		this->brief_;

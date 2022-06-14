@@ -9,7 +9,7 @@
 #include "types.hpp"
 #include "errors.hpp"
 
-std::string get_type_name(const LexemeDevice& tp)
+std::string get_device_repr(const LexemeDevice& tp)
 {
 	switch (tp)
 	{
@@ -46,7 +46,7 @@ std::string Token::to_string() const
 {
 	if (this->valid == true)
 	{
-		std::string tp = get_type_name(this->lexeme.type);
+		std::string tp = get_device_repr(this->lexeme.type);
 		return "... " + tp + std::string(10 - tp.size(), ' ') + this->lexeme.characters + '\n';
 	}
 	else
@@ -226,7 +226,7 @@ LexxedResult tokenize()
 		}
 		else
 		{
-			std::unique_ptr<BaseException> fault = std::make_unique<SyntaxError>(tk.position);
+			std::unique_ptr<BaseException> fault = SyntaxError::unique_ptr(tk.position);
 			return LexxedResult(fault);
 		}
 		endpos = tk.position;

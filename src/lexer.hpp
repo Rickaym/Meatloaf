@@ -142,17 +142,18 @@ struct LexxedResult
 
 LexxedResult tokenize();
 
+std::string get_device_repr(const LexemeDevice& tp);
+
 const Lexeme g_lexicon_affixes[21] =
 { {"...", LexemeDevice::affix, LexemePositional::unknown, g_low_prc, false, false},
-  {"\"", LexemeDevice::affix, LexemePositional::unknown, g_low_prc, false, false},
+  {"mstr", LexemeDevice::affix, LexemePositional::unknown, g_low_prc, true, true},
   {"~", LexemeDevice::affix, LexemePositional::prefix, g_lowest_prc, false, true},
   {"return", LexemeDevice::affix, LexemePositional::prefix, g_low_prc, true, true},
   {"str", LexemeDevice::affix, LexemePositional::prefix, g_low_prc, true, true},
-  {"mstr", LexemeDevice::affix, LexemePositional::unknown, g_low_prc, true, true},
   {"int", LexemeDevice::affix, LexemePositional::prefix, g_low_prc, true, true},
   {"float", LexemeDevice::affix, LexemePositional::prefix, g_low_prc, true, true},
-  {":", LexemeDevice::affix, LexemePositional::infix, g_lowest_prc, false, false},
   {"if", LexemeDevice::affix, LexemePositional::prefix, g_low_prc, true, true},
+  {":", LexemeDevice::affix, LexemePositional::infix, g_lowest_prc, false, false},
   {",", LexemeDevice::affix, LexemePositional::infix, g_lowest_prc, false, false},
   {"=", LexemeDevice::affix, LexemePositional::infix, g_lowest_prc, false, false},
   {"+", LexemeDevice::affix, LexemePositional::infix, g_lowest_prc, false, false},
@@ -160,6 +161,7 @@ const Lexeme g_lexicon_affixes[21] =
   {"-", LexemeDevice::affix, LexemePositional::infix, g_lowest_prc, false, true},
   {"*", LexemeDevice::affix, LexemePositional::infix, g_low_prc, false, false},
   {"/", LexemeDevice::affix, LexemePositional::infix, g_low_prc, false, false},
+  {"\"", LexemeDevice::affix, LexemePositional::circumfix, g_low_prc, false, false},
   {"{", LexemeDevice::affix, LexemePositional::circumfix, g_lowest_prc, false, false},
   {"}", LexemeDevice::affix, LexemePositional::circumfix, g_lowest_prc, false, false},
   {"(", LexemeDevice::affix, LexemePositional::circumfix, g_lowest_prc, false, false},

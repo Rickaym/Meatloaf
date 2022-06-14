@@ -66,7 +66,10 @@ void interactive_grill() {
             {
                 std::cout << tk;
             };
-            std::cout << "\n";
+            // more tokens than EOF
+            if (lres.tokens.size() > 1) {
+                std::cout << "\n";
+            }
         }
         else
         {
@@ -74,16 +77,25 @@ void interactive_grill() {
             continue;
         }
 
-        ParsedResult result = ast(lres.tokens);
+        auto result = ast(lres.tokens);
         if (result.failed == true)
         {
             std::cout << *(result.error);
         }
 
-        for (std::unique_ptr<Operable>& nd : result.nodes)
+        for (std::unique_ptr<Operable>& nd : result.value)
         {
-            std::shared_ptr<MlObject>& obj = nd->eval();
-            std::cout << obj->repr();
+            auto res = nd->eval();
+
+            if (res.failed) 
+            {
+                std::cout << *(res.error);
+            }
+            else if (res.value != nullptr) 
+            {
+                std::cout << res.value->repr() << " " << get_mltype_repr(res.value->get_type());
+            }
+            
         }
         std::cout << std::endl;
     }
