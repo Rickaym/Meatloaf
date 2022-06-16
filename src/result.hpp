@@ -26,6 +26,30 @@ struct Result
     {
         return Result<T>(fault);
     }
+
+    void as_success(T& val)
+    {
+        this->value = std::move(val);
+        this->failed = false;
+    }
+
+    void as_success(T&& val)
+    {
+        this->value = std::move(val);
+        this->failed = false;
+    }
+
+    void as_failure(std::unique_ptr<BaseException>& fault)
+    {
+        this->error = std::move(fault);
+        this->failed = true;
+    }
+
+    void as_failure(std::unique_ptr<BaseException>&& fault)
+    {
+        this->error = std::move(fault);
+        this->failed = true;
+    }
 private:
     Result(T& val)
         : value(std::move(val)), failed(false) {};

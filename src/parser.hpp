@@ -8,6 +8,7 @@
 #include "errors.hpp"
 #include "lexer.hpp"
 #include "result.hpp"
+#include "memory.hpp"
 
 
 /**
@@ -21,11 +22,13 @@
 */
 struct Operable
 {
-    Result<std::unique_ptr<MlObject>> virtual eval() const = 0;
-    
-    std::string virtual to_string() const = 0;
+    virtual std::string to_string() const = 0;
 
     friend std::ostream& operator<<(std::ostream& os, const Operable& n);
+ 
+    operate_result virtual eval(Stack& stack) const = 0;
+
+    virtual Token get_superior_token () const = 0;
 };
 
 struct Node : public Operable
@@ -44,9 +47,11 @@ struct Node : public Operable
 
     Node(Token& tk, Lexeme& idtf) : token(tk), identifier(idtf) {};
 
-    Result<std::unique_ptr<MlObject>> eval() const override;
+    operate_result eval(Stack& stack) const override;
 
     std::string to_string() const override;
+
+    Token get_superior_token() const override;
 };
 
 struct UnNode : public Operable
@@ -60,9 +65,11 @@ struct UnNode : public Operable
 
     UnNode(Token& op, std::unique_ptr<Operable>& opnd) : op_token(op), operand(std::move(opnd)) {};
 
-    Result<std::unique_ptr<MlObject>> eval() const override;
+    operate_result eval(Stack& stack) const override;
 
     std::string to_string() const override;
+
+    Token get_superior_token() const override;
 };
 
 struct BiNode : public Operable
@@ -78,24 +85,11 @@ struct BiNode : public Operable
     BiNode(std::unique_ptr<Operable>& super, Token& op_token, std::unique_ptr<Operable>& infer)
         : superior(std::move(super)), op_token(op_token), inferior(std::move(infer)) {};
 
-    Result<std::unique_ptr<MlObject>> eval() const override;
+    operate_result eval(Stack& stack) const override;
 
     std::string to_string() const override;
-};
 
-struct Status
-{
-    bool failed = false;
-    std::unique_ptr<BaseException> error;
-    std::unique_ptr<Operable> value;
-
-    void success(std::unique_ptr<Operable>&& val);
-
-    void success(std::unique_ptr<Operable>& val);
-
-    void failure(std::unique_ptr<BaseException>&& val);
-
-    void failure(std::unique_ptr<BaseException>& fault);
+    Token get_superior_token() const override;
 };
 
 struct Parser
@@ -105,11 +99,13 @@ struct Parser
 
     Token cur_token();
 
+    Token next_token();
+
     void advance();
 
     void retreat();
 
-    void deduce_statement(int&& prc, Status& tsk, Lexeme idtf);
+    void deduce_statement(int&& prc, Result<std::unique_ptr<Operable>>& tsk, Lexeme idtf);
 };
 
 Result<std::vector<std::unique_ptr<Operable>>> ast(std::vector<Token>& tks);

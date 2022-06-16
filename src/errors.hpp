@@ -31,7 +31,7 @@ private:
 
 struct SyntaxError : public BaseException
 {
-	static inline std::unique_ptr<SyntaxError> unique_ptr(Position pos, std::string brief = "Unexpected proceeding character or token") {
+	static inline std::unique_ptr<SyntaxError> unique_ptr(Position pos, std::string brief = "Unexpected proceeding character or token.") {
 		return std::make_unique<SyntaxError>(pos, brief);
 	}
 
@@ -57,8 +57,16 @@ struct UnsupportedOperator: public BaseException
 	}
 
 	UnsupportedOperator(Position& pos, std::string op, std::string type)
-		: BaseException(pos, "UnsupportedOoperator: " + op + " for type " + type + " is undefined.") {};
+		: BaseException(pos, "UnsupportedOperator: '" + op + "' for type '" + type + "' is undefined.") {};
 };
 
 
-struct RuntimeException;
+struct RuntimeError : public BaseException
+{
+	static inline std::unique_ptr<RuntimeError> unique_ptr(Position pos, std::string brief = "Unexpected proceeding character or token.") {
+		return std::make_unique<RuntimeError>(pos, brief);
+	}
+
+	RuntimeError(Position & pos, std::string brief)
+		: BaseException(pos, "RuntimeError: " + brief) {};
+};

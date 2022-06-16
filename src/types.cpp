@@ -4,13 +4,13 @@
 #include <memory>
 
 #include "lexer.hpp"
-#include "parser.hpp"
-#include "types.hpp"
 #include "result.hpp"
+#include "types.hpp"
 
-std::string get_mltype_repr(MlType type) {
-	switch (type)
-	{
+
+std::string get_mltype_repr(MlType type) 
+{
+	switch (type) {
 	case(MlType::mlint):
 		return "int";
 	case(MlType::mlstr):
@@ -20,95 +20,107 @@ std::string get_mltype_repr(MlType type) {
 	}
 }
 
-std::string MlInt::repr() {
+std::string MlInt::repr() 
+{
 	return std::to_string(this->val);
 }
 
-Result<std::unique_ptr<MlObject>> MlInt::operate(const Token& op)
+bool MlInt::modify(std::string modifier)
 {
-	if (op.lexeme.characters == "-")
-	{
-		return Result<std::unique_ptr<MlObject>>::success(std::make_unique<MlInt>(-this->val));
-	};
+	if (modifier == "mb") {
+		this->val *= 1000;
+		return true;
+	} 
+	else {
+		return false;
+	}
 }
 
-Result<std::unique_ptr<MlObject>> MlInt::operate(std::shared_ptr<MlObject> other, const Token& op)
+operate_result MlInt::operate(const Token& op) 
 {
-	std::shared_ptr<MlInt> int_object = std::dynamic_pointer_cast<MlInt>(other);
-	if (int_object == nullptr)
-	{
-		return Result<std::unique_ptr<MlObject>>::failure(
-			TypeError::unique_ptr(op.position, get_mltype_repr(other->type), get_mltype_repr(MlType::mlint)));
-	}
-
-	int otr = int_object->val; 
-	bool success = false;
-	if (op.lexeme.characters == "-")
-	{
-		otr = this->val - otr;
-		success = true;
-	}
-	else if (op.lexeme.characters == "+")
-	{
-		otr = this->val + otr;
-		success = true;
-	}
-	else if (op.lexeme.characters == "*")
-	{
-		otr = this->val * otr;
-		success = true;
-	}
-	else if (op.lexeme.characters == "/")
-	{
-		otr = this->val / otr;
-		success = true;
-	}
-
-	if (success)
-	{
-		return Result<std::unique_ptr<MlObject>>::success(MlInt::unique_ptr(otr));
+	if (op.lexeme.characters == "-") {
+		return operate_result::success(MlInt::shared_ptr(-this->val));
 	} 
-	else { 
-		return Result<std::unique_ptr<MlObject>>::failure(
+	else {
+		return operate_result::failure(
 			UnsupportedOperator::unique_ptr(op.position, op.lexeme.characters, get_mltype_repr(MlType::mlint)));
 	}
 }
 
-std::string MlStr::repr() {
+operate_result MlInt::operate(std::shared_ptr<MlObject> other, const Token& op) 
+{
+	std::shared_ptr<MlInt> int_object = std::dynamic_pointer_cast<MlInt>(other);
+	if (int_object == nullptr) {
+		return operate_result::failure(
+			TypeError::unique_ptr(op.position, get_mltype_repr(other->type), get_mltype_repr(MlType::mlint)));
+	}
+
+	int otr = int_object->val;
+	bool success = false;
+	if (op.lexeme.characters == "-") {
+		otr = this->val - otr;
+		success = true;
+	}
+	else if (op.lexeme.characters == "+") {
+		otr = this->val + otr;
+		success = true;
+	}
+	else if (op.lexeme.characters == "*") {
+		otr = this->val * otr;
+		success = true;
+	}
+	else if (op.lexeme.characters == "/") {
+		otr = this->val / otr;
+		success = true;
+	}
+
+	if (success) {
+		return operate_result::success(MlInt::shared_ptr(otr));
+	}
+	else {
+		return operate_result::failure(
+			UnsupportedOperator::unique_ptr(op.position, op.lexeme.characters, get_mltype_repr(MlType::mlint)));
+	}
+}
+
+std::string MlStr::repr() 
+{
 	return this->val;
 }
 
-Result<std::unique_ptr<MlObject>> MlStr::operate(const Token& op)
+bool MlStr::modify(std::string modifier)
 {
-	return Result<std::unique_ptr<MlObject>>::failure(
-		BaseException::unique_ptr(op.position, "OperationError: Affix "+op.lexeme.characters +" is not defined for strings."));
+	return false;
 }
 
-Result<std::unique_ptr<MlObject>> MlStr::operate(std::shared_ptr<MlObject> other, const Token& op)
+operate_result MlStr::operate(const Token& op) 
+{
+	return operate_result::failure(
+		BaseException::unique_ptr(op.position, "OperationError: Affix " + op.lexeme.characters + " is not defined for strings."));
+}
+
+operate_result MlStr::operate(std::shared_ptr<MlObject> other, const Token& op)
 {
 	std::shared_ptr<MlInt> int_object = std::dynamic_pointer_cast<MlInt>(other);
-	if (op.lexeme.characters == "+")
-	{
+	if (op.lexeme.characters == "+") {
 		std::string appendage;
-		if (int_object != nullptr)
-		{
+		if (int_object != nullptr) {
 			appendage = std::to_string(int_object->val);
 		}
 		else {
 			std::shared_ptr<MlStr> str_object = std::dynamic_pointer_cast<MlStr>(other);
 			appendage = str_object->val;
 		}
-		return Result<std::unique_ptr<MlObject>>::success(MlStr::unique_ptr(this->val + appendage));
+		return operate_result::success(MlStr::shared_ptr(this->val + appendage));
 	}
-	else if (op.lexeme.characters == "*" && int_object != nullptr)
-	{
+	else if (op.lexeme.characters == "*" && int_object != nullptr) {
 		int rep = int_object->val;
 		std::string end_str;
 		while (rep--) {
 			end_str += this->val;
 		}
-		return Result<std::unique_ptr<MlObject>>::success(MlStr::unique_ptr(end_str));
+		return operate_result::success(MlStr::shared_ptr(end_str));
 	}
-	return Result<std::unique_ptr<MlObject>>::failure(
+	return operate_result::failure(
 		UnsupportedOperator::unique_ptr(op.position, op.lexeme.characters, get_mltype_repr(MlType::mlstr)));
 }

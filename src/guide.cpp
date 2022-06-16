@@ -11,16 +11,16 @@ void TypeGuide::advance()
     this->pos++;
     this->column++;
 
-    if (this->newLine == true)
+    if (this->is_new_line == true)
     {
-        this->lastLineMax = this->column;
+        this->last_line_max = this->column;
         this->line++;
-        this->newLine = false;
+        this->is_new_line = false;
     };
     this->update_char();
     if (this->chr == '\n')
     {
-        this->newLine = true;
+        this->is_new_line = true;
     };
 };
 
@@ -37,7 +37,7 @@ void TypeGuide::retreat()
     this->update_char();
     if (this->chr == '\n')
     {
-        this->column = (int)this->lastLineMax;
+        this->column = (int)this->last_line_max;
         this->line--;
     };
 }

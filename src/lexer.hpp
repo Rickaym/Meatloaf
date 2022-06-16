@@ -8,6 +8,7 @@
 
 #include "errors.hpp"
 #include "guide.hpp"
+#include "result.hpp"
 
 /**
  Precedence (prc) constants.
@@ -35,7 +36,8 @@ enum class LexemePositional
 {
     prefix,
     infix,
-    circumfix,
+    circumfix, 
+    suffix,
     unknown
 };
 
@@ -50,17 +52,19 @@ enum class LexemePositional
  
  Members
  -------
- num    : an infinite lexeme, numeric type, every numeric string of characters
- symbol : an infinite lexeme, symbol type, every literal string of characters until it is resolved
+ num        : an infinite lexeme, numeric type, every numeric string of characters
+ symbol     : an infinite lexeme, symbol type, every literal string of characters until it is resolved
                into it's real type
- affix  : an infinite lexeme, affix type, modifies/annotates any other devices or itself
- eof    : a finite lexeme, EOF type, remarks the end of a token stream.
+ affix      : an infinite lexeme, affix type, modifies/annotates any other devices or itself
+ characters : a sort of symbol that doesn't evaluate to anything but a string representation of itself
+ eof        : a finite lexeme, EOF type, remarks the end of a token stream.
 */
 enum class LexemeDevice
 {
     num,
     symbol,
     affix,
+    characters,
     unknown,
     eof
 };
@@ -73,12 +77,18 @@ enum class LexemeDevice
  respond to unary calls as specifically prefixes. Infixes that want to respond
  to unary calls as suffixes should additionally define a separate suffix.
  
- characters : the string representation of the lexeme
- type   : the device identifier
- positional : the position identifier
- isolated   : whether if the lexeme needs to be surrounded by delimiters
- unary      : whether if the lexeme responds to unary calls as an operator
- binary     : whether if the lexeme responds to binary calls as an operator
+ characters  : the string representation of the lexeme
+ type        : the device identifier
+ positional  : the position identifier
+ precedence  : a numerical value for its precedence compared to other lexemes
+ isolated    : whether if the lexeme needs to have a delimiter after all its characters
+              Good ->- return 23
+                            ^^^
+              Bad  ->- return23
+                            ---
+ unary       : whether if the lexeme responds to unary calls as an operator in a prefixual way
+ parse_inter : (only matters for circumfixes) whether to parse the internal text that the circumfix
+               surrounds
 */
 struct Lexeme
 {
@@ -89,6 +99,8 @@ struct Lexeme
     
     bool isolated = false;
     bool unary = false;
+    bool parse_inter = false;
+    std::string end_char = characters;
 
     bool binary() {
         return positional == LexemePositional::infix;
@@ -127,43 +139,20 @@ struct Token
 };
 
 
-struct LexxedResult
-{
-    std::unique_ptr<BaseException> error;
-    std::vector<Token> tokens;
-    bool failed;
-
-    LexxedResult(std::vector<Token>& tks)
-        : tokens(tks), failed(false) {};
-
-    LexxedResult(std::unique_ptr<BaseException>& fault)
-        : error(std::move(fault)), failed(true) {}
-};
-
-LexxedResult tokenize();
+Result<std::vector<Token>> tokenize();
 
 std::string get_device_repr(const LexemeDevice& tp);
 
-const Lexeme g_lexicon_affixes[21] =
-{ {"...", LexemeDevice::affix, LexemePositional::unknown, g_low_prc, false, false},
-  {"mstr", LexemeDevice::affix, LexemePositional::unknown, g_low_prc, true, true},
-  {"~", LexemeDevice::affix, LexemePositional::prefix, g_lowest_prc, false, true},
-  {"return", LexemeDevice::affix, LexemePositional::prefix, g_low_prc, true, true},
-  {"str", LexemeDevice::affix, LexemePositional::prefix, g_low_prc, true, true},
-  {"int", LexemeDevice::affix, LexemePositional::prefix, g_low_prc, true, true},
-  {"float", LexemeDevice::affix, LexemePositional::prefix, g_low_prc, true, true},
-  {"if", LexemeDevice::affix, LexemePositional::prefix, g_low_prc, true, true},
-  {":", LexemeDevice::affix, LexemePositional::infix, g_lowest_prc, false, false},
-  {",", LexemeDevice::affix, LexemePositional::infix, g_lowest_prc, false, false},
-  {"=", LexemeDevice::affix, LexemePositional::infix, g_lowest_prc, false, false},
-  {"+", LexemeDevice::affix, LexemePositional::infix, g_lowest_prc, false, false},
-  {".", LexemeDevice::affix, LexemePositional::infix, g_lowest_prc, false, false},
-  {"-", LexemeDevice::affix, LexemePositional::infix, g_lowest_prc, false, true},
-  {"*", LexemeDevice::affix, LexemePositional::infix, g_low_prc, false, false},
-  {"/", LexemeDevice::affix, LexemePositional::infix, g_low_prc, false, false},
+const Lexeme g_lexicon_affixes[10] =
+{
+  {"mb", LexemeDevice::affix, LexemePositional::suffix, g_high_prc},
+  {"=", LexemeDevice::affix, LexemePositional::infix, g_lowest_prc},
+  {"+", LexemeDevice::affix, LexemePositional::infix, g_low_prc},
+  {".", LexemeDevice::affix, LexemePositional::infix, g_low_prc},
+  {"-", LexemeDevice::affix, LexemePositional::infix, g_low_prc, false, true},
+  {"*", LexemeDevice::affix, LexemePositional::infix, g_high_prc},
+  {"/", LexemeDevice::affix, LexemePositional::infix, g_high_prc},
   {"\"", LexemeDevice::affix, LexemePositional::circumfix, g_low_prc, false, false},
-  {"{", LexemeDevice::affix, LexemePositional::circumfix, g_lowest_prc, false, false},
-  {"}", LexemeDevice::affix, LexemePositional::circumfix, g_lowest_prc, false, false},
-  {"(", LexemeDevice::affix, LexemePositional::circumfix, g_lowest_prc, false, false},
-  {")", LexemeDevice::affix, LexemePositional::circumfix, g_lowest_prc, false, false}
+  {"(", LexemeDevice::affix, LexemePositional::circumfix, g_lowest_prc, false, false, true, ")"},
+  {")", LexemeDevice::affix, LexemePositional::unknown, g_lowest_prc}
  };

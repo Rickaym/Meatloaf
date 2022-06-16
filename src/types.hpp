@@ -7,6 +7,9 @@
 #include "lexer.hpp"
 #include "result.hpp"
 
+struct MlObject;
+
+typedef Result<std::shared_ptr<MlObject>> operate_result;
 
 enum MlType {
 	mlint,
@@ -26,13 +29,15 @@ public:
 	// make type specific representations
 	virtual std::string repr() = 0;
 
-	MlType get_type() {
+	inline MlType get_type() {
 		return this->type;
 	}
 
-	virtual Result<std::unique_ptr<MlObject>> operate(std::shared_ptr<MlObject> other, const Token& op) = 0;
+	virtual bool modify(std::string modifier) = 0;
 
-	virtual Result<std::unique_ptr<MlObject>> operate(const Token& op) = 0;
+	virtual operate_result operate(std::shared_ptr<MlObject> other, const Token& op) = 0;
+
+	virtual operate_result operate(const Token& op) = 0;
 };
 
 struct MlInt : public MlObject
@@ -51,13 +56,19 @@ struct MlInt : public MlObject
 		return std::make_shared<MlInt>(characters);
 	}
 
+	static inline std::shared_ptr<MlInt> shared_ptr(int v) {
+		return std::make_shared<MlInt>(v);
+	}
+
 	MlInt(int vl) : MlObject(MlType::mlint), val(vl) {};
 
 	MlInt(std::string vl) : MlObject(MlType::mlint), val(std::stoi(vl)) {};
 
-	Result<std::unique_ptr<MlObject>> operate(std::shared_ptr<MlObject> other, const Token& op) override;
+	bool modify(std::string modifier) override;
 
-	Result<std::unique_ptr<MlObject>> operate(const Token& op) override;
+	operate_result operate(std::shared_ptr<MlObject> other, const Token& op) override;
+
+	operate_result operate(const Token& op) override;
 
 	std::string repr() override;
 };
@@ -78,9 +89,11 @@ struct MlStr : public MlObject
 
 	MlStr(std::string vl) : MlObject(MlType::mlstr), val(vl) {};
 
-	Result<std::unique_ptr<MlObject>> operate(std::shared_ptr<MlObject> other, const Token& op) override;
+	bool modify(std::string modifier) override;
 
-	Result<std::unique_ptr<MlObject>> operate(const Token& op) override;
+	operate_result operate(std::shared_ptr<MlObject> other, const Token& op) override;
+
+	operate_result operate(const Token& op) override;
 
 	std::string repr() override;
 };

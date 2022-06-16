@@ -52,8 +52,8 @@ struct TypeGuide
     int len = 0;
     int column = 0;
     int line = 1;
-    int lastLineMax = 0;
-    bool newLine = false;
+    int last_line_max = 0;
+    bool is_new_line = false;
     bool eof = false;
 
     TypeGuide() = default;
