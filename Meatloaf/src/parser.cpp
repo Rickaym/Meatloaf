@@ -70,73 +70,6 @@ Token BiNode::get_superior_token() const {
 	return this->superior->get_superior_token();
 }
 
-operate_result Node::eval(Stack& stack) const
-{
-	std::shared_ptr<MlObject> obj_ptr;
-	bool void_eval = false;
-	switch (this->token.lexeme.type) {
-	case(LexemeDevice::num):
-		obj_ptr = MlInt::shared_ptr(this->token.lexeme.characters);
-		break;
-	case(LexemeDevice::characters):
-		obj_ptr = MlStr::shared_ptr(this->token.lexeme.characters);
-		break;
-	case(LexemeDevice::symbol):
-		obj_ptr = stack.get_definition(this->token.lexeme.characters);
-		break;
-	case(LexemeDevice::eof):
-		void_eval = true;
-	}
-
-	if (void_eval) {
-		return operate_result::success(nullptr);
-	}
-	else if (obj_ptr == nullptr) {
-		return operate_result::failure(
-			BaseException::unique_ptr(this->token.position, "BaseException: Lexeme device '" + get_device_repr(this->token.lexeme.type) + "' is not evaluable."));
-	}
-
-	if (this->identifier.positional == LexemePositional::suffix &&
-		!obj_ptr->modify(this->identifier.characters)) {
-		return operate_result::failure(
-			// Here try to make it so that the ending position is the end of the modifier or make a compound
-			BaseException::unique_ptr(this->token.position, "UnsupportedModifier: Modifier '" + this->identifier.characters + "' is not supported by type '" + get_device_repr(this->token.lexeme.type) + "'."));
-	}
-	else {
-		return operate_result::success(std::move(obj_ptr));
-	}
-}
-
-operate_result BiNode::eval(Stack& stack) const
-{
-	operate_result inf = this->inferior->eval(stack);
-	if (inf.failed) {
-		return inf;
-	}
-
-	if (this->superior->get_superior_token().lexeme.type == LexemeDevice::symbol && this->op_token.lexeme.characters == "=") {
-		stack.define(this->superior->get_superior_token().lexeme.characters, std::move(inf.value));
-		return operate_result::success(nullptr);
-	} 
-	else {
-		operate_result sup = this->superior->eval(stack);
-		if (sup.failed) {
-			return sup;
-		}
-		return sup.value->operate(inf.value, this->op_token);
-	}
-}
-
-operate_result UnNode::eval(Stack& stack) const
-{
-	operate_result oprd = this->operand->eval(stack);
-	if (oprd.failed)
-	{
-		return oprd;
-	}
-	return oprd.value->operate(this->op_token);
-}
-
 Result<std::vector<std::unique_ptr<Operable>>> ast(std::vector<Token>& tks)
 {
 	std::vector<std::unique_ptr<Operable>> nodes;
@@ -172,19 +105,14 @@ void Parser::deduce_statement(int&& prc, Result<std::unique_ptr<Operable>>& tsk,
 			return tsk.as_failure(
 				RuntimeError::unique_ptr(this->cur_token().position, "Isolated suffix missing a parent"));
 		}
-		else if (this->cur_token().lexeme.unary == true) {
-			Token op = this->cur_token();
+		else if (this->cur_token().lexeme.unary == true || this->cur_token().lexeme.positional == LexemePositional::prefix) {
+			Token prefix = this->cur_token();
 			/* prefixes only consumes a single proceeding operand whereas
 			   any non-prefix affixes that responds to unary calls consume
 			   the entire following statement */
 			this->advance();
-			if (op.lexeme.positional == LexemePositional::prefix) {
-				tsk.as_success(Node::unique_ptr(this->cur_token(), idtf));
-			}
-			else {
-				this->deduce_statement(0, tsk, idtf);
-			}
-			tsk.as_success(UnNode::unique_ptr(op, tsk.value));
+			this->deduce_statement(0, tsk, idtf);
+			tsk.as_success(UnNode::unique_ptr(prefix, tsk.value));
 		}
 		else { 
 			Token tk = this->cur_token();;

@@ -11,6 +11,12 @@
 #include "memory.hpp"
 
 
+enum NodeType {
+    node,
+    binode,
+    unnode
+};
+
 /**
  A lexeme a singular or a combination of morphemes, lexemes that look-a-like does not change
  meaning.
@@ -25,10 +31,17 @@ struct Operable
     virtual std::string to_string() const = 0;
 
     friend std::ostream& operator<<(std::ostream& os, const Operable& n);
- 
-    operate_result virtual eval(Stack& stack) const = 0;
 
     virtual Token get_superior_token () const = 0;
+    
+    inline NodeType get_type() {
+        return this->node_type;
+    };
+private:
+    NodeType node_type;
+
+protected:
+    Operable(NodeType node_type) : node_type(node_type) {};
 };
 
 struct Node : public Operable
@@ -45,9 +58,7 @@ struct Node : public Operable
     // positional of lexeme that constructed the node
     Lexeme identifier;
 
-    Node(Token& tk, Lexeme& idtf) : token(tk), identifier(idtf) {};
-
-    operate_result eval(Stack& stack) const override;
+    Node(Token& tk, Lexeme& idtf) : Operable(NodeType::node), token(tk), identifier(idtf) {};
 
     std::string to_string() const override;
 
@@ -63,9 +74,7 @@ struct UnNode : public Operable
     Token op_token;
     std::shared_ptr<Operable> operand;
 
-    UnNode(Token& op, std::unique_ptr<Operable>& opnd) : op_token(op), operand(std::move(opnd)) {};
-
-    operate_result eval(Stack& stack) const override;
+    UnNode(Token& op, std::unique_ptr<Operable>& opnd) : Operable(NodeType::unnode), op_token(op), operand(std::move(opnd)) {};
 
     std::string to_string() const override;
 
@@ -83,9 +92,7 @@ struct BiNode : public Operable
     std::shared_ptr<Operable> inferior;
 
     BiNode(std::unique_ptr<Operable>& super, Token& op_token, std::unique_ptr<Operable>& infer)
-        : superior(std::move(super)), op_token(op_token), inferior(std::move(infer)) {};
-
-    operate_result eval(Stack& stack) const override;
+        : Operable(NodeType::binode), superior(std::move(super)), op_token(op_token), inferior(std::move(infer)) {};
 
     std::string to_string() const override;
 

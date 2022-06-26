@@ -12,11 +12,14 @@ struct MlObject;
 typedef Result<std::shared_ptr<MlObject>> operate_result;
 
 enum MlType {
+	unknown,
 	mlint,
 	mlstr
 };
 
 std::string get_mltype_repr(MlType type);
+
+MlType get_repr_mltype(std::string repr);
 
 struct MlObject
 {

@@ -7,6 +7,7 @@
 
 #include "lexer.hpp"
 #include "parser.hpp"
+#include "interpreter.hpp"
 #include "git.hpp"
 #include "memory.hpp"
 
@@ -89,7 +90,8 @@ void interactive_grill()
         }
 
         for (auto& nd : result.value) {
-            auto res = nd->eval(global);
+            std::shared_ptr<Operable> as_shared = std::move(nd);
+            auto res = MlInterpreter::eval(as_shared, global);
 
             if (res.failed) {
                 std::cout << *(res.error);

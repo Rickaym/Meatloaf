@@ -34,11 +34,11 @@ const char g_lexicon_delimiters[2] = {' ', ';'};
 */
 enum class LexemePositional
 {
+    unknown,
     prefix,
     infix,
     circumfix, 
-    suffix,
-    unknown
+    suffix
 };
 
 /**
@@ -61,11 +61,11 @@ enum class LexemePositional
 */
 enum class LexemeDevice
 {
+    unknown,
     num,
     symbol,
     affix,
     characters,
-    unknown,
     eof
 };
 
@@ -143,15 +143,24 @@ Result<std::vector<Token>> tokenize();
 
 std::string get_device_repr(const LexemeDevice& tp);
 
-const Lexeme g_lexicon_affixes[10] =
+const Lexeme g_lexicon_affixes[12] =
 {
+  // STRONGLY TYPED IDENTIFIERS
+  {"str", LexemeDevice::affix, LexemePositional::prefix, g_low_prc},
+  {"int", LexemeDevice::affix, LexemePositional::prefix, g_low_prc},
+  
+  // SUFFIXES
   {"mb", LexemeDevice::affix, LexemePositional::suffix, g_high_prc},
+  
+  // OPERATORS  
   {"=", LexemeDevice::affix, LexemePositional::infix, g_lowest_prc},
   {"+", LexemeDevice::affix, LexemePositional::infix, g_low_prc},
   {".", LexemeDevice::affix, LexemePositional::infix, g_low_prc},
   {"-", LexemeDevice::affix, LexemePositional::infix, g_low_prc, false, true},
   {"*", LexemeDevice::affix, LexemePositional::infix, g_high_prc},
   {"/", LexemeDevice::affix, LexemePositional::infix, g_high_prc},
+  
+  // CIRCUMFIXES
   {"\"", LexemeDevice::affix, LexemePositional::circumfix, g_low_prc, false, false},
   {"(", LexemeDevice::affix, LexemePositional::circumfix, g_lowest_prc, false, false, true, ")"},
   {")", LexemeDevice::affix, LexemePositional::unknown, g_lowest_prc}

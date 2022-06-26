@@ -20,6 +20,19 @@ std::string get_mltype_repr(MlType type)
 	}
 }
 
+MlType get_repr_mltype(std::string repr)
+{
+	if (repr == "int") {
+		return MlType::mlint;
+	}
+	else if (repr == "str") {
+		return MlType::mlstr;
+	}
+	else {
+		return MlType::unknown;
+	}
+}
+
 std::string MlInt::repr() 
 {
 	return std::to_string(this->val);
