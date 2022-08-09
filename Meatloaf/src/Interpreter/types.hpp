@@ -4,8 +4,8 @@
 #include <vector>
 #include <memory>
 
-#include "lexer.hpp"
-#include "result.hpp"
+#include "../lexer.hpp"
+#include "../result.hpp"
 
 struct MlObject;
 

@@ -7,9 +7,9 @@
 
 #include "lexer.hpp"
 #include "parser.hpp"
-#include "interpreter.hpp"
 #include "git.hpp"
-#include "memory.hpp"
+#include "Interpreter/memory.hpp"
+#include "Interpreter/interpreter.hpp"
 
 #define ML_VERSION "0.0.0.b"
 

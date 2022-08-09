@@ -3,17 +3,27 @@
 2. **[Functionality](#functionality)**
 
 # Abstraction
-In extension to major high level languages, this is an attempt to perform abstractions of barebone level concepts
-into higher domains. Concepts such as **keywords* and **qualifiers* will be exposed to the user arena thus intrinsically 
-implementable in a non ambiguous way.
+A meaning oriented language.
 
-The philosophy behind this implementation is in the idea that *everything consisted of source code follows an objective
-ruleset of reason and logic, but the orthography, in other words, the way and manner in which 
-we describe a certain string of logic through source text is to be subjectively or collectively notated but not strictly.
+In addition to the general Object Oriented Model, an orthographic layer is added to detail the meanings of each lexemes
+For example, *keywords* and *qualifiers* will still remain in essence functionally the same as any other language; but 
+rather than the concept of a "Keyword" or a "Qualifier", it is divided into meaning as contained by orthography and functional
+meaning. Keywords can contain orthographic properties like suffixual, or prefixual, operative or derivative 
+and optional or mandatory.
 
-The logical reasoning and turing completeness of the language has no change. Such an abstraction
-enables alternative semantics, arguably better yet, a mobile collective representation in interpretation of logic. As a matter 
-of fact, the basis of this idea depends enabling that exact evolution.
+All the linguistics and the lexicon of the language can be user-defined, i.e., users can define an orthographic
+infix that holds the functional meaning of subtraction; or a suffix that denotes complex numericals.
+
+# The Division
+A lexeme has two distinct properties when tokenized. 
+	a. Positional
+	b. Device
+	
+Lexeme positionals determines the orthographic meaning of the lexeme, accounting for where the occurances of the appointed
+lexeme may be legal or illegal. Lexem devices annotates the functional meaning of the lexeme, i.e., symbolic, numerical, 
+string, etc...
+
+# Nascent Data Types
 
 # Functionality
 

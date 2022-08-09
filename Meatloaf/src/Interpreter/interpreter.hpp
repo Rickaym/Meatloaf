@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "parser.hpp"
+#include "../parser.hpp"
 #include "memory.hpp"
 
 namespace MlInterpreter {

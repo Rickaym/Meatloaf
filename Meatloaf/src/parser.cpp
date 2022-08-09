@@ -5,8 +5,7 @@
 #include "lexer.hpp"
 #include "parser.hpp"
 #include "result.hpp"
-#include "memory.hpp"
-#include "types.hpp"
+
 
 std::ostream& operator<<(std::ostream& os, const Operable& n)
 {

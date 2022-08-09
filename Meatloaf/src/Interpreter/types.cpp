@@ -3,8 +3,8 @@
 #include <iostream>
 #include <memory>
 
-#include "lexer.hpp"
-#include "result.hpp"
+#include "../lexer.hpp"
+#include "../result.hpp"
 #include "types.hpp"
 
 

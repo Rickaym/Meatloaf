@@ -4,11 +4,9 @@
 #include <memory>
 #include <ostream>
 
-#include "types.hpp"
 #include "errors.hpp"
 #include "lexer.hpp"
 #include "result.hpp"
-#include "memory.hpp"
 
 
 enum NodeType {
